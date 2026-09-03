@@ -50,7 +50,8 @@ export function telaDados({ config, sala, reserva, fotografo, restanteMs }) {
 
       <label class="termo">
         <input type="checkbox" id="aceite" />
-        <span>Li e concordo com as regras do estúdio e a política de cancelamento.</span>
+        <span>Li e concordo com as regras do estúdio, a política de cancelamento e a
+          <a href="#privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
       </label>
 
       <details class="regras">

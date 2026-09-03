@@ -6,7 +6,14 @@ function moldura(conteudo) {
   return `
     <div class="acesso">
       <div class="acesso-caixa">${conteudo}</div>
-      <div class="acesso-rodape">${rodapeStudioSlot()}</div>
+      <div class="acesso-rodape">
+        ${rodapeStudioSlot()}
+        <p class="acesso-legal">
+          <a href="#privacidade" target="_blank" rel="noopener">Política de Privacidade</a>
+          <span>&middot;</span>
+          <a href="#termos" target="_blank" rel="noopener">Termos de Uso</a>
+        </p>
+      </div>
     </div>`
 }
 

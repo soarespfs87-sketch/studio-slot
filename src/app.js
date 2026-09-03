@@ -95,6 +95,7 @@ import {
 } from './dados.js'
 import { enviarImagem } from './upload.js'
 import { telaEscolherEstudio, telaSemEstudio } from './telas/acesso.js'
+import { telaPrivacidade, telaTermos } from './telas/legal.js'
 import { migrarEstudioLumen } from './migracao.js'
 
 const DEZ_MINUTOS = 10 * 60 * 1000
@@ -256,7 +257,16 @@ function render() {
       return renderEscolherEstudio()
     case 'semEstudio':
       return renderSemEstudio()
+    case 'privacidade':
+    case 'termos':
+      return renderLegal()
   }
+}
+
+function renderLegal() {
+  app.innerHTML =
+    estado.tela === 'termos' ? telaTermos({ standalone: false }) : telaPrivacidade({ standalone: false })
+  ligarNavegacao()
 }
 
 // ---- Início ----

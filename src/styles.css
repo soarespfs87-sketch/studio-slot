@@ -1816,3 +1816,91 @@ input[type='number'],
   font-size: 0.62rem;
   color: var(--cor-texto-suave);
 }
+
+/* ── Páginas jurídicas (Privacidade / Termos) ── */
+.legal {
+  max-width: 640px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.legal-data {
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+  margin-top: -4px;
+}
+
+.legal h2 {
+  font-family: var(--fonte-titulo);
+  font-size: 1.02rem;
+  font-weight: 600;
+  margin: 24px 0 6px;
+}
+
+.legal p,
+.legal li {
+  font-size: 0.9rem;
+}
+
+.legal ul {
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.legal a {
+  color: var(--cor-primaria);
+}
+
+.legal .elo {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--cor-primaria);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.legal-troca {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--cor-borda);
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
+/* Links jurídicos no rodapé do início e na tela de acesso */
+.rodape-legal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+}
+
+.link-legal {
+  appearance: none;
+  border: none;
+  background: none;
+  font-family: var(--fonte-texto);
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.acesso-legal {
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.acesso-legal a {
+  color: var(--cor-texto-suave);
+}

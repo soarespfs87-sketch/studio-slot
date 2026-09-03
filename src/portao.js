@@ -24,9 +24,22 @@ import {
   telaEsqueciSenha,
   telaNovaSenha,
 } from './telas/acesso.js'
+import { telaPrivacidade, telaTermos } from './telas/legal.js'
 import { iniciar } from './app.js'
 
 const app = document.querySelector('#app')
+
+// Privacidade / Termos abertos direto pela URL (#privacidade, #termos) —
+// funcionam com ou sem login, inclusive numa aba nova.
+function paginaLegalDoHash() {
+  const h = location.hash.replace(/^#\/?/, '')
+  return h === 'privacidade' || h === 'termos' ? h : null
+}
+
+function mostrarLegal(qual) {
+  app.innerHTML =
+    qual === 'termos' ? telaTermos({ standalone: true }) : telaPrivacidade({ standalone: true })
+}
 
 // A pessoa veio de um link de "esqueci minha senha"? O Supabase manda o
 // link com "#...type=recovery..." — a gente confere ANTES de qualquer
@@ -38,6 +51,9 @@ function veioDeRecuperacaoSenha() {
 
 export async function montarPortao() {
   if (veioDeRecuperacaoSenha()) return mostrarNovaSenha()
+
+  const legal = paginaLegalDoHash()
+  if (legal) return mostrarLegal(legal)
 
   const s = await sessaoAtual()
   if (!s) return mostrarAcesso('entrar')

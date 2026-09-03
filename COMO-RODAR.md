@@ -60,3 +60,14 @@ Link "Área do dono" no rodapé do início. De lá dá pra:
       horários de cada dia sala por sala, com quem reservou e o status
 - [x] Fase Final — Publicar (Supabase + login + recuperação de senha + deploy Netlify + PWA)
       pagamento por Pix confirmado manualmente pelo dono
+- [x] Política de Privacidade + Termos de Uso (LGPD, PT-BR)
+      `src/telas/legal.js` — abre pelo rodapé do início, pela tela de login
+      (`#privacidade` / `#termos`) e pelo aceite na hora de reservar.
+      ⚠️ Troque o e-mail `privacidade@studioslot.app` (const `CONTATO_PRIVACIDADE`)
+      pelo canal real antes do beta. Versão em inglês fica para 2027.
+
+## Ainda pra fazer (backlog do MVP)
+- Notificações automáticas por e-mail (confirmação + lembrete 24h/2h) — adiado
+- Gateway de pagamento real (Pix + cartão) — hoje é Pix manual
+- Status "concluída" / check-out da reserva depois da sessão
+- Multi-idioma PT/EN e multi-moeda BRL/USD (lançamento comercial 2027)

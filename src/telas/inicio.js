@@ -63,5 +63,10 @@ export function telaInicio({ config, salas, filtroData, ehAdmin, ehDono }) {
         ${ehAdmin ? '<button class="link-dono" data-ir="plataforma">Painel da plataforma</button>' : ''}
         <button class="link-dono" data-acao="sair">Sair</button>
       </div>
+      <div class="rodape-legal">
+        <button class="link-legal" data-ir="privacidade">Privacidade</button>
+        <span>&middot;</span>
+        <button class="link-legal" data-ir="termos">Termos de uso</button>
+      </div>
     </footer>`
 }
