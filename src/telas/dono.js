@@ -225,31 +225,47 @@ function barraOcupacao(o) {
       <div class="dash-ocup-trilho">
         <div class="dash-ocup-preenche" style="width:${Math.min(100, o.pct)}%"></div>
       </div>
-      <span class="dash-ocup-detalhe">${o.horasVendidas} h vendidas de ${o.horasDisponiveis} h no mês</span>
+      <span class="dash-ocup-detalhe">${o.horasVendidas} h de ${o.horasDisponiveis} h de funcionamento</span>
+    </div>`
+}
+
+const PERIODOS_DASH = [
+  ['mesAtual', 'Este mês'],
+  ['mesPassado', 'Mês passado'],
+  ['7dias', '7 dias'],
+]
+
+function seletorPeriodo(ativo) {
+  return `
+    <div class="dash-periodo" role="tablist">
+      ${PERIODOS_DASH.map(
+        ([chave, rot]) => `
+        <button type="button" class="dash-periodo-btn ${chave === ativo ? 'is-ativo' : ''}"
+          data-dash-periodo="${chave}">${rot}</button>`,
+      ).join('')}
     </div>`
 }
 
 export function telaDonoDashboard({ resumo }) {
-  const { mesNome, semDados, hoje, mes, ocupacao } = resumo
+  const { periodoAtivo, periodoTitulo, periodoRotulo, semDados, hoje, periodo, ocupacao } = resumo
 
-  if (semDados) {
-    return `
-      <div class="topo-nav">
-        <button class="link-voltar" data-ir="donoHome">&larr; Painel</button>
-      </div>
-      <div class="reservar-corpo">
-        <h1 class="titulo-grande">Resumo do estúdio</h1>
-        <p class="vazio">Ainda não há reservas por aqui. Quando os fotógrafos começarem a reservar, os números aparecem nesta tela.</p>
-      </div>`
-  }
-
-  return `
+  const cabecalho = `
     <div class="topo-nav">
       <button class="link-voltar" data-ir="donoHome">&larr; Painel</button>
     </div>
-
     <div class="reservar-corpo">
-      <h1 class="titulo-grande">Resumo do estúdio</h1>
+      <div class="dono-cab">
+        <h1 class="titulo-grande">Resumo do estúdio</h1>
+        <button type="button" class="mini-btn" data-acao="atualizar-resumo">Atualizar</button>
+      </div>`
+
+  if (semDados) {
+    return `${cabecalho}
+      <p class="vazio">Ainda não há reservas por aqui. Quando os fotógrafos começarem a reservar, os números aparecem nesta tela.</p>
+    </div>`
+  }
+
+  return `${cabecalho}
 
       <h2 class="dash-titulo">Hoje</h2>
       <div class="dash-grid">
@@ -264,22 +280,23 @@ export function telaDonoDashboard({ resumo }) {
           : '<p class="vazio">Nenhuma sessão marcada para hoje.</p>'
       }
 
-      <h2 class="dash-titulo">Este mês &middot; ${mesNome}</h2>
+      <h2 class="dash-titulo">${periodoTitulo} &middot; ${periodoRotulo}</h2>
+      ${seletorPeriodo(periodoAtivo)}
       <div class="dash-grid">
-        ${cartao('faturamento', brl(mes.faturamento), mes.retido ? `+ ${brl(mes.retido)} retido de cancelamentos` : 'confirmado')}
-        ${cartao('sessões', mes.sessoes)}
-        ${cartao('horas vendidas', `${mes.horas} h`)}
-        ${cartao('ticket médio', brl(mes.ticket))}
-        ${cartao('reservas com extra', `${mes.comExtra}%`)}
+        ${cartao('faturamento', brl(periodo.faturamento), periodo.retido ? `+ ${brl(periodo.retido)} retido de cancelamentos` : 'confirmado')}
+        ${cartao('sessões', periodo.sessoes)}
+        ${cartao('horas vendidas', `${periodo.horas} h`)}
+        ${cartao('ticket médio', brl(periodo.ticket))}
+        ${cartao('reservas com extra', `${periodo.comExtra}%`)}
       </div>
 
-      <h2 class="dash-titulo">Ocupação por sala &middot; ${mesNome}</h2>
+      <h2 class="dash-titulo">Ocupação por sala &middot; ${periodoRotulo}</h2>
       ${
         ocupacao.length
           ? `<div class="dash-ocup-lista">${ocupacao.map(barraOcupacao).join('')}</div>`
           : '<p class="vazio">Cadastre salas para acompanhar a ocupação.</p>'
       }
-      <p class="campo-dica">Ocupação = horas reservadas ÷ horas de funcionamento da sala nos dias já corridos do mês.</p>
+      <p class="campo-dica">Ocupação = horas reservadas ÷ horas de funcionamento da sala no período (descontados feriados e dias que ainda não chegaram).</p>
     </div>`
 }
 

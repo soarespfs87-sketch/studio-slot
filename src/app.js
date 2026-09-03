@@ -116,9 +116,13 @@ let estado = {
   donoBloqueioId: null, // bloqueio em edição no painel (null = novo)
   donoErro: null, // mensagem de erro do formulário atual
   donoConfirmar: false, // pedindo confirmação de exclusão
+  dashPeriodo: 'mesAtual', // período do dashboard: mesAtual | mesPassado | 7dias
 }
 
 let intervaloContador = null
+// Cache das reservas do estúdio enquanto o dono navega pelo dashboard
+// (alternar o período não volta ao banco). render() limpa ao sair da tela.
+let _reservasDash = null
 const app = document.querySelector('#app')
 
 function irPara(patch) {
@@ -176,6 +180,9 @@ function render() {
   limparTravasExpiradas()
   config = getConfig() // sempre a versão mais recente
   aplicarTema(config)
+
+  // saiu do dashboard: joga fora o cache de reservas do resumo
+  if (estado.tela !== 'donoDashboard') _reservasDash = null
 
   switch (estado.tela) {
     case 'inicio':
@@ -1008,15 +1015,59 @@ async function renderDonoPagamentos() {
 
 // ---- Resumo do estúdio: dashboard do dono (Fase 6) ----
 const arredonda1 = (n) => Math.round(n * 10) / 10
+const isoDia = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const nomeMes = (ano, mes1a12) =>
+  new Date(ano, mes1a12 - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })
+
+// Traduz a chave do período num intervalo [de, ate] (datas ISO, inclusivo)
+// + rótulos pra tela.
+function intervaloDoPeriodo(chave, hojeISO) {
+  const [y, m] = hojeISO.split('-').map(Number)
+  if (chave === 'mesPassado') {
+    const py = m === 1 ? y - 1 : y
+    const pm = m === 1 ? 12 : m - 1
+    const ult = new Date(py, pm, 0).getDate()
+    return {
+      de: `${py}-${String(pm).padStart(2, '0')}-01`,
+      ate: `${py}-${String(pm).padStart(2, '0')}-${String(ult).padStart(2, '0')}`,
+      titulo: 'Mês passado',
+      rotulo: nomeMes(py, pm),
+    }
+  }
+  if (chave === '7dias') {
+    const ini = new Date(hojeISO + 'T12:00:00')
+    ini.setDate(ini.getDate() - 6)
+    return { de: isoDia(ini), ate: hojeISO, titulo: 'Últimos 7 dias', rotulo: 'últimos 7 dias' }
+  }
+  const ult = new Date(y, m, 0).getDate()
+  return {
+    de: `${hojeISO.slice(0, 7)}-01`,
+    ate: `${hojeISO.slice(0, 7)}-${String(ult).padStart(2, '0')}`,
+    titulo: 'Este mês',
+    rotulo: nomeMes(y, m),
+  }
+}
+
+// Dias de funcionamento entre 'de' e 'ate' (sem contar o futuro nem feriados).
+function diasFuncionamento(de, ate, hojeISO, feriados) {
+  const fim = ate < hojeISO ? ate : hojeISO
+  if (fim < de) return 0
+  const dias = Math.round((Date.parse(fim + 'T12:00:00') - Date.parse(de + 'T12:00:00')) / 86400000) + 1
+  const feriadosNoTrecho = (feriados || []).filter((f) => f >= de && f <= fim).length
+  return Math.max(0, dias - feriadosNoTrecho)
+}
 
 async function renderDonoDashboard() {
-  app.innerHTML = '<div class="reservar-corpo"><p class="vazio">Carregando resumo…</p></div>'
-  const reservas = await listarReservasDoEstudio()
+  if (!_reservasDash) {
+    app.innerHTML = '<div class="reservar-corpo"><p class="vazio">Carregando resumo…</p></div>'
+    _reservasDash = await listarReservasDoEstudio()
+  }
+  const reservas = _reservasDash
 
   const hoje = hojeISO()
-  const mesAtual = hoje.slice(0, 7) // "AAAA-MM"
-  const diasCorridos = Number(hoje.slice(8, 10)) // 1..31
-  const mesNome = new Date(hoje + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'long' })
+  const chavePeriodo = estado.dashPeriodo || 'mesAtual'
+  const { de, ate, titulo, rotulo } = intervaloDoPeriodo(chavePeriodo, hoje)
 
   const horasDe = (r) => Math.max(0, (hhmmParaMin(r.horaFim) - hhmmParaMin(r.horaInicio)) / 60)
   const vendida = (r) => r.status === 'confirmada' || r.status === 'aguardando_pagamento'
@@ -1043,28 +1094,29 @@ async function renderDonoDashboard() {
     })),
   }
 
-  // ── Este mês ──
-  const noMes = (r) => r.data.slice(0, 7) === mesAtual
-  const confMes = reservas.filter((r) => r.status === 'confirmada' && noMes(r))
-  const canceladasMes = reservas.filter((r) => r.status === 'cancelada' && noMes(r))
-  const fatMes = confMes.reduce((s, r) => s + r.valorTotal, 0)
-  const horasMes = confMes.reduce((s, r) => s + horasDe(r), 0)
-  const comExtra = confMes.filter((r) => (r.extras || []).length > 0).length
-  const mesResumo = {
-    faturamento: fatMes,
-    retido: canceladasMes.reduce((s, r) => s + (r.valorRetido || 0), 0),
-    sessoes: confMes.length,
-    horas: arredonda1(horasMes),
-    ticket: confMes.length ? Math.round(fatMes / confMes.length) : 0,
-    comExtra: confMes.length ? Math.round((comExtra / confMes.length) * 100) : 0,
+  // ── Período escolhido ──
+  const noPeriodo = (r) => r.data >= de && r.data <= ate
+  const confP = reservas.filter((r) => r.status === 'confirmada' && noPeriodo(r))
+  const canceladasP = reservas.filter((r) => r.status === 'cancelada' && noPeriodo(r))
+  const fatP = confP.reduce((s, r) => s + r.valorTotal, 0)
+  const horasP = confP.reduce((s, r) => s + horasDe(r), 0)
+  const comExtra = confP.filter((r) => (r.extras || []).length > 0).length
+  const periodoResumo = {
+    faturamento: fatP,
+    retido: canceladasP.reduce((s, r) => s + (r.valorRetido || 0), 0),
+    sessoes: confP.length,
+    horas: arredonda1(horasP),
+    ticket: confP.length ? Math.round(fatP / confP.length) : 0,
+    comExtra: confP.length ? Math.round((comExtra / confP.length) * 100) : 0,
   }
 
-  // ── Ocupação por sala (mês corrente, até hoje) ──
+  // ── Ocupação por sala no período (descontados feriados e dias por vir) ──
   const { abre, fecha } = config.horarioFuncionamento
   const horasPorDia = Math.max(0, (hhmmParaMin(fecha) - hhmmParaMin(abre)) / 60)
-  const horasDisponiveis = arredonda1(horasPorDia * diasCorridos)
+  const nDias = diasFuncionamento(de, ate, hoje, config.feriados)
+  const horasDisponiveis = arredonda1(horasPorDia * nDias)
   const ocupacao = getSalas().map((sala) => {
-    const vendidas = confMes
+    const vendidas = confP
       .filter((r) => r.salaId === sala.id)
       .reduce((s, r) => s + horasDe(r), 0)
     return {
@@ -1076,9 +1128,25 @@ async function renderDonoDashboard() {
   })
 
   app.innerHTML = telaDonoDashboard({
-    resumo: { mesNome, semDados: reservas.length === 0, hoje: hojeResumo, mes: mesResumo, ocupacao },
+    resumo: {
+      periodoAtivo: chavePeriodo,
+      periodoTitulo: titulo,
+      periodoRotulo: rotulo,
+      semDados: reservas.length === 0,
+      hoje: hojeResumo,
+      periodo: periodoResumo,
+      ocupacao,
+    },
   })
   ligarNavegacao()
+
+  app.querySelectorAll('[data-dash-periodo]').forEach((b) =>
+    b.addEventListener('click', () => irPara({ dashPeriodo: b.dataset.dashPeriodo })),
+  )
+  app.querySelector('[data-acao="atualizar-resumo"]')?.addEventListener('click', () => {
+    _reservasDash = null
+    render()
+  })
 }
 
 // ════════════════════════════════════════════════════════════════
