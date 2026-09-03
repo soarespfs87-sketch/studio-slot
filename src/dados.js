@@ -103,6 +103,7 @@ function estudioParaConfig(e) {
     logoComNome: !!e.logo_com_nome,
     icone: e.icone || null,
     chavePix: e.chave_pix || '',
+    regrasReserva: e.regras_reserva || configPadrao.regrasReserva,
   }
 }
 
@@ -121,6 +122,7 @@ function configParaEstudio(c) {
     logoComNome: 'logo_com_nome',
     icone: 'icone',
     chavePix: 'chave_pix',
+    regrasReserva: 'regras_reserva',
   }
   for (const [appKey, dbKey] of Object.entries(par)) {
     if (appKey in c) m[dbKey] = c[appKey]

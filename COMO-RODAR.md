@@ -37,14 +37,17 @@ Link "Área do dono" no rodapé do início. De lá dá pra:
   janela de temporada, buffer, duração do slot e **preço em 3 faixas** (dia útil / fim de semana / feriado)
 - **Extras** — criar/editar/excluir, valor e em quais salas aparece
 - **Identidade** — nome, **logo no topo** + **ícone do app no celular** (viram o favicon/apple-touch-icon),
-  descrição, cores (tema muda na hora), horário, feriados, regras, política, contato
+  descrição, cores (tema muda na hora), horário, feriados, regras, política, contato,
+  **prazos de remarcação/cancelamento e a taxa** (antes ficavam fixos no código)
 
 ## Status das fases
 - [x] Fase 0 — Setup + identidade + preview duplo
 - [x] Fase 1 — Core: ver a sala, agenda, travar horário 10 min, aceite do termo
 - [x] Fase 2 — Extras + pagamento simulado + confirmação
 - [x] Fase 3 — Minha Reserva + cancelar/remarcar
-      (remarcar até 48h antes; cancelamento grátis até 72h antes, depois retém 50%)
+      (prazos de remarcação/cancelamento e taxa configuráveis pelo dono na Identidade;
+      padrão: remarcar até 48h antes, grátis até 72h antes, depois retém 50%)
+      Minha Reserva tem "como chegar" (mapa), "falar no WhatsApp" e horário de check-in
 - [x] Fase 4 — Cenário sazonal + buffer
       (sala sazonal só reserva entre `disponivelDe`/`disponivelAte`; buffer por sala
       bloqueia os horários colados numa reserva — aparecem como "preparo")

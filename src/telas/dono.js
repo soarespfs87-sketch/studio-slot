@@ -746,6 +746,7 @@ export function telaDonoBloqueioForm({ bloqueio, salas, ehNovo, erro, confirmarE
 // ════════════════════════════════════════════════════════════════
 export function telaDonoIdentidade({ config, erro }) {
   const t = config.tema
+  const rr = config.regrasReserva || {}
   return `
     <div class="topo-nav">
       <button class="link-voltar" data-ir="donoHome">&larr; Painel</button>
@@ -787,9 +788,17 @@ export function telaDonoIdentidade({ config, erro }) {
         { linhas: 4, dica: 'Nesses dias vale a faixa de preço "feriado".' },
       )}
 
+      <h2 class="bloco-titulo">Cancelamento e remarcação</h2>
+      <div class="dono-grid3">
+        ${campoNumero('f-prazo-remarcar', 'Remarcar até', rr.prazoRemarcar ?? 48, { min: 0, sufixo: 'h antes' })}
+        ${campoNumero('f-prazo-cancelar', 'Cancelar grátis até', rr.prazoCancelarGratis ?? 72, { min: 0, sufixo: 'h antes' })}
+        ${campoNumero('f-taxa-cancelar', 'Taxa depois do prazo', rr.taxaCancelamento ?? 50, { min: 0, max: 100, sufixo: '%' })}
+      </div>
+      <small class="campo-dica">Passado o prazo grátis, o estúdio retém essa % do valor da reserva. Vale para todas as salas.</small>
+
       <h2 class="bloco-titulo">Textos</h2>
       ${campoArea('f-regras', 'Regras gerais', config.regrasGerais, { linhas: 3 })}
-      ${campoArea('f-cancelamento', 'Política de cancelamento', config.politicaCancelamento, { linhas: 2 })}
+      ${campoArea('f-cancelamento', 'Política de cancelamento (texto para o cliente)', config.politicaCancelamento, { linhas: 2 })}
 
       <h2 class="bloco-titulo">Contato</h2>
       ${campoTexto('f-telefone', 'Telefone', config.contato.telefone)}

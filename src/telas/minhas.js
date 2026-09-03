@@ -3,7 +3,20 @@
 import { brl, dataBR, hojeISO } from '../format.js'
 import { valorDoSlot, faixaDoDia, NOME_FAIXA } from '../agenda.js'
 import { slotBotao, tagTemporada, painelForaTemporada } from './agenda.js'
-import { PRAZO_REMARCAR } from '../reserva.js'
+
+// Link do WhatsApp a partir de um telefone brasileiro digitado de qualquer jeito.
+function linkWhatsApp(telefone) {
+  const so = String(telefone || '').replace(/\D/g, '')
+  if (so.length < 10) return null
+  const comDDI = so.length <= 11 ? `55${so}` : so
+  return `https://wa.me/${comDDI}`
+}
+
+// Link "como chegar" — abre o endereço no mapa.
+function linkMapa(endereco) {
+  const e = String(endereco || '').trim()
+  return e ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e)}` : null
+}
 
 const ROTULO_STATUS = {
   confirmada: 'Confirmada',
@@ -55,8 +68,47 @@ function cardReserva(r) {
     </button>`
 }
 
+// Bloco "no dia da sessão": check-in, como chegar, falar com o estúdio, regras.
+function blocoDoDia(config, reserva) {
+  const tel = config.contato?.telefone || ''
+  const endereco = config.contato?.endereco || ''
+  const wa = linkWhatsApp(tel)
+  const mapa = linkMapa(endereco)
+  const regras = (config.regrasGerais || '').trim()
+
+  return `
+    <div class="checkin-info">
+      Check-in liberado a partir das <strong>${reserva.horaInicio}</strong> — o início da sua sessão.
+    </div>
+
+    <div class="reserva-acessos">
+      ${
+        mapa
+          ? `<a class="botao botao-fantasma" href="${mapa}" target="_blank" rel="noopener">Como chegar</a>`
+          : ''
+      }
+      ${
+        wa
+          ? `<a class="botao botao-fantasma" href="${wa}" target="_blank" rel="noopener">Falar com o estúdio no WhatsApp</a>`
+          : tel
+            ? `<a class="botao botao-fantasma" href="tel:${tel.replace(/[^\d+]/g, '')}">Ligar para o estúdio</a>`
+            : ''
+      }
+    </div>
+    ${endereco ? `<p class="acao-motivo">${endereco}</p>` : ''}
+
+    ${
+      regras
+        ? `<details class="regras">
+             <summary>Regras do estúdio</summary>
+             <p>${regras}</p>
+           </details>`
+        : ''
+    }`
+}
+
 // ---- Detalhe de uma reserva ----
-export function telaReservaDetalhe({ sala, reserva, podeRemarcar, horasAteSessao }) {
+export function telaReservaDetalhe({ sala, reserva, config, podeRemarcar, horasAteSessao, prazoRemarcar }) {
   const cancelada = reserva.status === 'cancelada'
   const aguardando = reserva.status === 'aguardando_pagamento'
   const rotuloTotal = cancelada ? 'Total da reserva' : aguardando ? 'Total (Pix avisado)' : 'Total pago'
@@ -86,6 +138,8 @@ export function telaReservaDetalhe({ sala, reserva, podeRemarcar, horasAteSessao
         <div class="total-linha"><span>Forma de pagamento</span><span>Pix</span></div>
       </div>
 
+      ${cancelada ? '' : blocoDoDia(config, reserva)}
+
       ${
         cancelada
           ? `<div class="aviso-inline">
@@ -107,7 +161,7 @@ export function telaReservaDetalhe({ sala, reserva, podeRemarcar, horasAteSessao
                 : `<p class="acao-motivo">${
                     aguardando
                       ? 'Só dá para remarcar depois que o estúdio confirmar o pagamento. Você ainda pode cancelar.'
-                      : `Só dá para remarcar até ${PRAZO_REMARCAR}h antes da sessão${
+                      : `Só dá para remarcar até ${prazoRemarcar}h antes da sessão${
                           horasAteSessao > 0 ? ` (faltam ${Math.round(horasAteSessao)}h)` : ''
                         }. Você ainda pode cancelar.`
                   }</p>`
@@ -137,7 +191,7 @@ export function telaCancelar({ config, sala, reserva, calc }) {
         ${
           calc.gratis
             ? `<p>Cancelamento <strong>gratuito</strong>. Você recebe o valor integral de volta (simulado).</p>`
-            : `<p>Como faltam menos de 72h, o estúdio retém <strong>${calc.taxaPercent}%</strong> do valor.</p>`
+            : `<p>Como faltam menos de ${calc.prazoGratis}h, o estúdio retém <strong>${calc.taxaPercent}%</strong> do valor.</p>`
         }
       </div>
 

@@ -52,6 +52,7 @@ export async function migrarEstudioLumen() {
         horario_funcionamento: cfg.horarioFuncionamento,
         feriados: cfg.feriados,
         tema: cfg.tema,
+        regras_reserva: cfg.regrasReserva,
         logo_com_nome: !!cfg.logoComNome,
         dono_id: uid,
       })

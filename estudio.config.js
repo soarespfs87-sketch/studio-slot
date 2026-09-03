@@ -15,6 +15,13 @@ export const estudioConfig = {
   politicaCancelamento:
     'Cancelamento gratuito até 72h antes da sessão. Depois disso, taxa de 50% do valor.',
 
+  // Prazos da reserva — o dono ajusta tudo isto no Painel (Identidade).
+  regrasReserva: {
+    prazoRemarcar: 48, // horas antes da sessão em que ainda dá pra remarcar
+    prazoCancelarGratis: 72, // horas antes em que o cancelamento é sem taxa
+    taxaCancelamento: 50, // % que o estúdio retém depois do prazo grátis
+  },
+
   // Chave Pix do estúdio — é o que o fotógrafo vê na hora de pagar a reserva.
   chavePix: 'estudiolumen@pix.com.br',
 

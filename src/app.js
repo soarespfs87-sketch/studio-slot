@@ -40,7 +40,7 @@ import {
   reservaSeguraOHorario,
 } from './dados.js'
 import { gerarSlots, valorDoSlot, infoTemporada } from './agenda.js'
-import { podeRemarcar, calculoCancelamento, horasAteSessao } from './reserva.js'
+import { podeRemarcar, calculoCancelamento, horasAteSessao, regrasReserva } from './reserva.js'
 import { hojeISO, mmss, dataBR, hhmmParaMin } from './format.js'
 import { telaInicio } from './telas/inicio.js'
 import { telaDetalhe } from './telas/detalhe.js'
@@ -555,8 +555,10 @@ function renderReservaDetalhe() {
   app.innerHTML = telaReservaDetalhe({
     sala,
     reserva,
+    config,
     podeRemarcar: podeRemarcar(reserva),
     horasAteSessao: horasAteSessao(reserva),
+    prazoRemarcar: regrasReserva().prazoRemarcar,
   })
   ligarNavegacao()
 
@@ -1001,6 +1003,11 @@ function renderDonoIdentidade() {
       },
       feriados: linhasDe('#f-feriados').filter((l) => /^\d{4}-\d{2}-\d{2}$/.test(l)),
       chavePix: textoDe('#f-chave-pix'),
+      regrasReserva: {
+        prazoRemarcar: numDe('#f-prazo-remarcar'),
+        prazoCancelarGratis: numDe('#f-prazo-cancelar'),
+        taxaCancelamento: Math.min(100, numDe('#f-taxa-cancelar')),
+      },
     })
     if (error) return irPara({ donoErro: 'Não deu pra salvar: ' + (error.message || '') })
     irPara({ tela: 'donoHome', donoErro: null })

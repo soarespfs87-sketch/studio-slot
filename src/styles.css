@@ -905,6 +905,32 @@ input[type='number'],
   font-size: 0.88rem;
 }
 
+/* No dia da sessão: check-in + acessos rápidos */
+.checkin-info {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid #cfe6d6;
+  border-radius: 12px;
+  background: #f2f8f4;
+  font-size: 0.88rem;
+}
+
+.reserva-acessos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.reserva-acessos .botao {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+}
+
 /* Bloco da política de cancelamento */
 .politica-bloco {
   margin-top: 18px;
