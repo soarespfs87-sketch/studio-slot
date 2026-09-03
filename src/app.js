@@ -1,7 +1,9 @@
 // ────────────────────────────────────────────────────────────────
 //  Controlador do app — decide qual tela mostrar e liga os botões
 //  Fluxo: inicio -> detalhe -> agenda -> extras -> dados
-//                                   -> pagamento -> processando -> confirmacao
+//                                   -> pagamento (Pix) -> aguardandoPagamento
+//         O dono confirma o recebimento no Painel ("Pagamentos pendentes")
+//         e só aí a reserva vira "confirmada".
 //         (trava de 10 min expira em qualquer passo -> expirada)
 // ────────────────────────────────────────────────────────────────
 
@@ -32,10 +34,12 @@ import {
   getFotografo,
   setFotografo,
   novoId,
+  listarPagamentosPendentes,
+  confirmarPagamento,
 } from './dados.js'
 import { gerarSlots, valorDoSlot, infoTemporada } from './agenda.js'
 import { podeRemarcar, calculoCancelamento, horasAteSessao } from './reserva.js'
-import { hojeISO, mmss } from './format.js'
+import { hojeISO, mmss, dataBR } from './format.js'
 import { telaInicio } from './telas/inicio.js'
 import { telaDetalhe } from './telas/detalhe.js'
 import { telaAgenda } from './telas/agenda.js'
@@ -43,8 +47,7 @@ import { telaExtras } from './telas/extras.js'
 import {
   telaDados,
   telaPagamento,
-  telaProcessando,
-  telaConfirmacao,
+  telaAguardandoPagamento,
   telaExpirada,
 } from './telas/reservar.js'
 import {
@@ -65,6 +68,7 @@ import {
   telaDonoBloqueios,
   telaDonoBloqueioForm,
   telaDonoIdentidade,
+  telaDonoPagamentos,
   salaEmBranco,
   extraEmBranco,
   bloqueioEmBranco,
@@ -104,7 +108,6 @@ let estado = {
   dataAgenda: null,
   reservaId: null,
   extrasSel: {}, // { [extraId]: quantidade }
-  metodo: null, // 'pix' | 'cartao'
   remarcarSlot: null, // "HH:MM|HH:MM" escolhido na remarcação
   donoSalaId: null, // sala em edição no painel (null = nova)
   donoExtraId: null, // extra em edição no painel (null = novo)
@@ -131,9 +134,15 @@ function ligarNavegacao() {
 const travaViva = (r) =>
   !!r && r.status === 'travada' && r.travaExpiraEm > Date.now()
 
-// Usada no começo de cada passo do fluxo: se a trava caiu, manda pra tela "expirada".
+// Usada no começo de cada passo do fluxo: se a trava caiu, manda pra tela
+// "expirada". Se a pessoa já tinha clicado "já paguei" (ex.: apertou voltar
+// no navegador), manda pra tela de espera em vez de dizer que expirou.
 function exigirTravaViva(reserva) {
   if (travaViva(reserva)) return true
+  if (reserva?.status === 'aguardando_pagamento') {
+    irPara({ tela: 'aguardandoPagamento' })
+    return false
+  }
   if (reserva) void removeReserva(reserva.id)
   irPara({ tela: 'expirada' })
   return false
@@ -179,11 +188,8 @@ function render() {
       return renderDados()
     case 'pagamento':
       return renderPagamento()
-    case 'processando':
-      app.innerHTML = telaProcessando()
-      return
-    case 'confirmacao':
-      return renderConfirmacao()
+    case 'aguardandoPagamento':
+      return renderAguardandoPagamento()
     case 'expirada':
       app.innerHTML = telaExpirada({ sala: getSala(estado.salaId) })
       return ligarNavegacao()
@@ -217,6 +223,8 @@ function render() {
       return renderDonoBloqueioForm()
     case 'donoIdentidade':
       return renderDonoIdentidade()
+    case 'donoPagamentos':
+      return renderDonoPagamentos()
     case 'plataforma':
       return renderPlataforma()
     case 'escolherEstudio':
@@ -229,7 +237,6 @@ function render() {
 // ---- Início ----
 function renderInicio() {
   estado.extrasSel = {}
-  estado.metodo = null
 
   app.innerHTML = telaInicio({
     config,
@@ -327,7 +334,6 @@ async function criarTrava(sala, data, inicio, fim) {
     reservaId: id,
     dataAgenda: data,
     extrasSel: {},
-    metodo: null,
   })
 }
 
@@ -429,7 +435,7 @@ function renderDados() {
   })
 }
 
-// ---- Pagamento (simulado) ----
+// ---- Pagamento por Pix (o dono confirma o recebimento depois) ----
 function renderPagamento() {
   const reserva = getReserva(estado.reservaId)
   if (!exigirTravaViva(reserva)) return
@@ -438,7 +444,7 @@ function renderPagamento() {
   app.innerHTML = telaPagamento({
     sala,
     reserva,
-    metodo: estado.metodo,
+    chavePix: config.chavePix,
     restanteMs: reserva.travaExpiraEm - Date.now(),
   })
   iniciarContador(reserva)
@@ -447,42 +453,40 @@ function renderPagamento() {
     irPara({ tela: 'dados' })
   })
 
-  app.querySelectorAll('[data-metodo]').forEach((btn) => {
-    btn.addEventListener('click', () => irPara({ metodo: btn.dataset.metodo }))
+  app.querySelector('#btn-copiar-pix')?.addEventListener('click', async () => {
+    const status = app.querySelector('#pix-copiado-status')
+    try {
+      await navigator.clipboard.writeText(config.chavePix || '')
+      if (status) status.textContent = 'Copiado ✓'
+    } catch {
+      if (status) status.textContent = 'Não deu para copiar — selecione o texto manualmente.'
+    }
   })
 
-  app.querySelector('#btn-pagar').addEventListener('click', () => {
-    if (!estado.metodo) return
+  app.querySelector('#btn-ja-paguei')?.addEventListener('click', async (e) => {
+    e.target.disabled = true
     const id = reserva.id
-    const metodo = estado.metodo
-    estado.tela = 'processando'
-    render()
-
-    setTimeout(async () => {
-      await updateReserva(id, {
-        status: 'confirmada',
-        formaPagamento: metodo,
-        pagoEm: Date.now(),
-        travaExpiraEm: null,
-      })
-      await addPagamento({
-        id: novoId('pag'),
-        reservaId: id,
-        valor: reserva.valorTotal,
-        metodo,
-        status: 'aprovado',
-        criadoEm: Date.now(),
-      })
-      irPara({ tela: 'confirmacao' })
-    }, 2200)
+    await updateReserva(id, {
+      status: 'aguardando_pagamento',
+      formaPagamento: 'pix',
+    })
+    await addPagamento({
+      id: novoId('pag'),
+      reservaId: id,
+      valor: reserva.valorTotal,
+      metodo: 'pix',
+      status: 'aguardando_confirmacao',
+      criadoEm: Date.now(),
+    })
+    irPara({ tela: 'aguardandoPagamento' })
   })
 }
 
-// ---- Confirmação ----
-function renderConfirmacao() {
+// ---- Aguardando o estúdio confirmar o Pix ----
+function renderAguardandoPagamento() {
   const reserva = getReserva(estado.reservaId)
   if (!reserva) return irPara({ tela: 'inicio' })
-  app.innerHTML = telaConfirmacao({ sala: getSala(reserva.salaId), reserva })
+  app.innerHTML = telaAguardandoPagamento({ sala: getSala(reserva.salaId), reserva })
   ligarNavegacao()
 }
 
@@ -490,9 +494,10 @@ function renderConfirmacao() {
 //  Fase 3 — Minha Reserva: ver, cancelar e remarcar
 // ════════════════════════════════════════════════════════════════
 
-// Confirmadas primeiro; dentro de cada grupo, da mais próxima pra mais distante.
+// Confirmadas e aguardando confirmação primeiro; dentro de cada grupo,
+// da mais próxima pra mais distante.
 function ordenarReservas(a, b) {
-  const peso = (r) => (r.status === 'confirmada' ? 0 : 1)
+  const peso = (r) => (r.status === 'confirmada' || r.status === 'aguardando_pagamento' ? 0 : 1)
   return (
     peso(a) - peso(b) ||
     a.data.localeCompare(b.data) ||
@@ -541,7 +546,8 @@ function renderReservaDetalhe() {
 // ---- Cancelar (mostra a política) ----
 function renderCancelar() {
   const reserva = getReserva(estado.reservaId)
-  if (!reserva || reserva.status !== 'confirmada') return irPara({ tela: 'minhaReserva' })
+  if (!reserva || !['confirmada', 'aguardando_pagamento'].includes(reserva.status))
+    return irPara({ tela: 'minhaReserva' })
 
   const sala = getSala(reserva.salaId)
   const calc = calculoCancelamento(reserva)
@@ -651,13 +657,15 @@ const linhasDe = (sel) =>
     .map((l) => l.trim())
     .filter(Boolean)
 
-function renderDonoHome() {
+async function renderDonoHome() {
   const nB = getBloqueios().length
+  const pendentes = await listarPagamentosPendentes()
   app.innerHTML = telaDonoHome({
     config,
     nSalas: getSalas().length,
     nExtras: getExtras().length,
     nBloqueios: nB === 0 ? 'nenhum' : nB === 1 ? '1 bloqueio' : `${nB} bloqueios`,
+    nPagamentosPendentes: pendentes.length,
   })
   ligarNavegacao()
 }
@@ -967,10 +975,31 @@ function renderDonoIdentidade() {
         textoSuave: app.querySelector('#f-cor-texto').value,
       },
       feriados: linhasDe('#f-feriados').filter((l) => /^\d{4}-\d{2}-\d{2}$/.test(l)),
+      chavePix: textoDe('#f-chave-pix'),
     })
     if (error) return irPara({ donoErro: 'Não deu pra salvar: ' + (error.message || '') })
     irPara({ tela: 'donoHome', donoErro: null })
   })
+}
+
+// ---- Pagamentos pendentes: confirmação manual do Pix ----
+async function renderDonoPagamentos() {
+  app.innerHTML = '<div class="reservar-corpo"><p class="vazio">Carregando…</p></div>'
+  const brutos = await listarPagamentosPendentes()
+  const pendentes = brutos
+    .map((r) => ({ ...r, salaNome: getSala(r.salaId)?.nome, dataBR: dataBR(r.data) }))
+    .sort((a, b) => a.data.localeCompare(b.data) || a.horaInicio.localeCompare(b.horaInicio))
+
+  app.innerHTML = telaDonoPagamentos({ pendentes })
+  ligarNavegacao()
+
+  app.querySelectorAll('[data-acao="confirmar-pagamento"]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      b.disabled = true
+      await confirmarPagamento(b.dataset.id)
+      renderDonoPagamentos()
+    }),
+  )
 }
 
 // ════════════════════════════════════════════════════════════════

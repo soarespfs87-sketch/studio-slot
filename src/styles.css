@@ -612,41 +612,42 @@ input[type='number'],
   color: var(--cor-primaria);
 }
 
-/* ---- Pagamento ---- */
-.metodos {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.metodo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 14px 16px;
+/* ---- Pagamento por Pix ---- */
+.pix-caixa {
+  margin-top: 10px;
+  padding: 16px;
   border: 1px solid var(--cor-borda);
   border-radius: 12px;
   background: #fff;
-  cursor: pointer;
-  font-family: var(--fonte-texto);
-  text-align: left;
 }
 
-.metodo strong {
-  font-size: 0.95rem;
-}
-
-.metodo span {
+.pix-rotulo {
+  display: block;
   font-size: 0.78rem;
   color: var(--cor-texto-suave);
+  margin-bottom: 8px;
 }
 
-.metodo-on {
-  border-color: var(--cor-primaria);
-  background: #fef6f1;
-  box-shadow: inset 0 0 0 1px var(--cor-primaria);
+.pix-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pix-linha code {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.pix-status {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  color: var(--cor-primaria);
 }
 
 .nota-simulacao {
@@ -855,6 +856,11 @@ input[type='number'],
 .badge-cancelada {
   background: #f1eeec;
   color: var(--cor-texto-suave);
+}
+
+.badge-aguardando_pagamento {
+  background: #fdf3d9;
+  color: #8a6a06;
 }
 
 .badge-solo {
@@ -1123,6 +1129,24 @@ input[type='number'],
 .dono-item-sub {
   font-size: 0.82rem;
   color: var(--cor-texto-suave);
+}
+
+.dono-item-alerta {
+  border-color: #e6b800;
+  background: #fdf9ec;
+}
+
+.dono-badge {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 7px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: #e6b800;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 /* Cabeçalho de seção com botão à direita */

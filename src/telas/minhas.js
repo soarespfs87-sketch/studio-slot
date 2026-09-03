@@ -7,6 +7,7 @@ import { PRAZO_REMARCAR } from '../reserva.js'
 
 const ROTULO_STATUS = {
   confirmada: 'Confirmada',
+  aguardando_pagamento: 'Aguardando confirmação',
   cancelada: 'Cancelada',
 }
 
@@ -57,7 +58,8 @@ function cardReserva(r) {
 // ---- Detalhe de uma reserva ----
 export function telaReservaDetalhe({ sala, reserva, podeRemarcar, horasAteSessao }) {
   const cancelada = reserva.status === 'cancelada'
-  const metodoTexto = reserva.formaPagamento === 'pix' ? 'Pix' : 'Cartão de crédito'
+  const aguardando = reserva.status === 'aguardando_pagamento'
+  const rotuloTotal = cancelada ? 'Total da reserva' : aguardando ? 'Total (Pix avisado)' : 'Total pago'
 
   return `
     <div class="topo-nav">
@@ -71,11 +73,17 @@ export function telaReservaDetalhe({ sala, reserva, podeRemarcar, horasAteSessao
         <span class="badge-status badge-${reserva.status} badge-solo">${ROTULO_STATUS[reserva.status] || reserva.status}</span>
       </div>
 
+      ${
+        aguardando
+          ? `<p class="aviso-inline">Aguardando o estúdio confirmar o recebimento do Pix. O horário já está garantido pra você.</p>`
+          : ''
+      }
+
       <div class="total-bloco">
         <div class="total-linha"><span>Sala</span><span>${brl(reserva.valorSala)}</span></div>
         ${linhasExtras(reserva.extras)}
-        <div class="total-linha total-final"><span>Total ${cancelada ? 'da reserva' : 'pago'}</span><span>${brl(reserva.valorTotal)}</span></div>
-        <div class="total-linha"><span>Forma de pagamento</span><span>${metodoTexto}</span></div>
+        <div class="total-linha total-final"><span>${rotuloTotal}</span><span>${brl(reserva.valorTotal)}</span></div>
+        <div class="total-linha"><span>Forma de pagamento</span><span>Pix</span></div>
       </div>
 
       ${
@@ -96,9 +104,13 @@ export function telaReservaDetalhe({ sala, reserva, podeRemarcar, horasAteSessao
             ${
               podeRemarcar
                 ? ''
-                : `<p class="acao-motivo">Só dá para remarcar até ${PRAZO_REMARCAR}h antes da sessão${
-                    horasAteSessao > 0 ? ` (faltam ${Math.round(horasAteSessao)}h)` : ''
-                  }. Você ainda pode cancelar.</p>`
+                : `<p class="acao-motivo">${
+                    aguardando
+                      ? 'Só dá para remarcar depois que o estúdio confirmar o pagamento. Você ainda pode cancelar.'
+                      : `Só dá para remarcar até ${PRAZO_REMARCAR}h antes da sessão${
+                          horasAteSessao > 0 ? ` (faltam ${Math.round(horasAteSessao)}h)` : ''
+                        }. Você ainda pode cancelar.`
+                  }</p>`
             }`
       }
     </div>`

@@ -14,6 +14,10 @@ export const estudioConfig = {
     'Chegue com 10 minutos de antecedência. A montagem e a desmontagem do seu set precisam caber dentro do horário reservado.',
   politicaCancelamento:
     'Cancelamento gratuito até 72h antes da sessão. Depois disso, taxa de 50% do valor.',
+
+  // Chave Pix do estúdio — é o que o fotógrafo vê na hora de pagar a reserva.
+  chavePix: 'estudiolumen@pix.com.br',
+
   contato: {
     telefone: '(11) 90000-0000',
     endereco: 'Rua da Luz, 123 — São Paulo, SP',

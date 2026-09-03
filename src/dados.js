@@ -102,6 +102,7 @@ function estudioParaConfig(e) {
     logo: e.logo || null,
     logoComNome: !!e.logo_com_nome,
     icone: e.icone || null,
+    chavePix: e.chave_pix || '',
   }
 }
 
@@ -119,6 +120,7 @@ function configParaEstudio(c) {
     logo: 'logo',
     logoComNome: 'logo_com_nome',
     icone: 'icone',
+    chavePix: 'chave_pix',
   }
   for (const [appKey, dbKey] of Object.entries(par)) {
     if (appKey in c) m[dbKey] = c[appKey]
@@ -455,7 +457,11 @@ export async function removeReserva(id) {
 }
 
 export function reservaSeguraOHorario(r, agora = Date.now()) {
-  return r.status === 'confirmada' || (r.status === 'travada' && r.travaExpiraEm > agora)
+  return (
+    r.status === 'confirmada' ||
+    r.status === 'aguardando_pagamento' ||
+    (r.status === 'travada' && r.travaExpiraEm > agora)
+  )
 }
 
 // No modo banco, a portinha 'horarios_ocupados' já ignora trava vencida.
@@ -512,7 +518,9 @@ export async function setFotografo(dados) {
 }
 
 export const getMinhasReservas = () =>
-  getReservas().filter((r) => r.status === 'confirmada' || r.status === 'cancelada')
+  getReservas().filter((r) =>
+    ['confirmada', 'aguardando_pagamento', 'cancelada'].includes(r.status),
+  )
 
 export async function cancelarReserva(id, calculo) {
   return updateReserva(id, {
@@ -521,6 +529,24 @@ export async function cancelarReserva(id, calculo) {
     valorRetido: calculo.valorRetido,
     valorDevolvido: calculo.valorDevolvido,
   })
+}
+
+// ── Pagamento Pix confirmado pelo dono ─────────────────────────
+// Todas as reservas do estúdio (de qualquer fotógrafo) que estão
+// esperando o dono confirmar que o Pix caiu na conta.
+export async function listarPagamentosPendentes() {
+  if (_modo !== 'banco' || !_estudioId) return []
+  const { data } = await supabase
+    .from('reservas')
+    .select('*')
+    .eq('estudio_id', _estudioId)
+    .eq('status', 'aguardando_pagamento')
+    .order('data')
+  return (data || []).map(reservaDoBanco)
+}
+
+export async function confirmarPagamento(id) {
+  return updateReserva(id, { status: 'confirmada', pagoEm: Date.now() })
 }
 
 export async function remarcarReserva(id, { data, horaInicio, horaFim, valorSala, valorTotal }) {

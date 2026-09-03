@@ -140,7 +140,7 @@ export function bloqueioEmBranco() {
 // ════════════════════════════════════════════════════════════════
 //  Home do painel
 // ════════════════════════════════════════════════════════════════
-export function telaDonoHome({ config, nSalas, nExtras, nBloqueios }) {
+export function telaDonoHome({ config, nSalas, nExtras, nBloqueios, nPagamentosPendentes }) {
   return `
     <div class="topo-nav">
       <button class="link-voltar" data-ir="inicio">&larr; Voltar para o app</button>
@@ -151,6 +151,15 @@ export function telaDonoHome({ config, nSalas, nExtras, nBloqueios }) {
       <p class="detalhe-desc">${config.nome}</p>
 
       <div class="dono-menu">
+        ${
+          nPagamentosPendentes > 0
+            ? `
+        <button class="dono-item dono-item-alerta" data-ir="donoPagamentos">
+          <span class="dono-item-nome">Pagamentos pendentes <span class="dono-badge">${nPagamentosPendentes}</span></span>
+          <span class="dono-item-sub">Pix avisado pelo fotógrafo, esperando sua confirmação</span>
+        </button>`
+            : ''
+        }
         <button class="dono-item" data-ir="donoSalas">
           <span class="dono-item-nome">Salas e cenários</span>
           <span class="dono-item-sub">${nSalas} cadastrada(s) &middot; fotos, preços, temporada, intervalos</span>
@@ -165,8 +174,40 @@ export function telaDonoHome({ config, nSalas, nExtras, nBloqueios }) {
         </button>
         <button class="dono-item" data-ir="donoIdentidade">
           <span class="dono-item-nome">Identidade do estúdio</span>
-          <span class="dono-item-sub">nome, cores, horário, regras, feriados</span>
+          <span class="dono-item-sub">nome, cores, horário, regras, feriados, chave Pix</span>
         </button>
+      </div>
+    </div>`
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Pagamentos pendentes — confirmação manual do Pix
+// ════════════════════════════════════════════════════════════════
+function linhaPagamento(r) {
+  return `
+    <div class="dono-linha dono-linha-pagamento">
+      <div class="dl-info">
+        <span class="dl-nome">${esc(r.fotografoNome || 'Fotógrafo')} &middot; ${esc(r.salaNome || '')}</span>
+        <span class="dl-sub">${r.dataBR} &middot; ${r.horaInicio} às ${r.horaFim} &middot; ${brl(r.valorTotal)}</span>
+      </div>
+      <div class="dl-acoes">
+        <button class="mini-btn mini-btn-primario" data-acao="confirmar-pagamento" data-id="${r.id}">Confirmar pagamento</button>
+      </div>
+    </div>`
+}
+
+export function telaDonoPagamentos({ pendentes }) {
+  return `
+    <div class="topo-nav">
+      <button class="link-voltar" data-ir="donoHome">&larr; Painel</button>
+    </div>
+
+    <div class="reservar-corpo">
+      <h1 class="titulo-grande">Pagamentos pendentes</h1>
+      <p class="detalhe-desc">O fotógrafo avisou que já pagou o Pix. Confira na sua conta e confirme — só depois disso a reserva vira definitiva.</p>
+
+      <div class="dono-lista">
+        ${pendentes.map(linhaPagamento).join('') || '<p class="vazio">Nenhum pagamento esperando confirmação.</p>'}
       </div>
     </div>`
 }
@@ -495,6 +536,12 @@ export function telaDonoIdentidade({ config, erro }) {
       <h2 class="bloco-titulo">Contato</h2>
       ${campoTexto('f-telefone', 'Telefone', config.contato.telefone)}
       ${campoTexto('f-endereco', 'Endereço', config.contato.endereco)}
+
+      <h2 class="bloco-titulo">Pagamento</h2>
+      ${campoTexto('f-chave-pix', 'Chave Pix', config.chavePix || '', {
+        placeholder: 'CPF, CNPJ, e-mail, telefone ou chave aleatória',
+        dica: 'É essa chave que o fotógrafo vê na hora de pagar a reserva.',
+      })}
 
       <button type="submit" class="botao botao-grande">Salvar identidade</button>
     </form>`

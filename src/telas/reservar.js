@@ -1,5 +1,5 @@
-// Telas do fluxo de reserva: dados + termo, pagamento (simulado),
-// processando, confirmação e "tempo esgotado".
+// Telas do fluxo de reserva: dados + termo, pagamento por Pix
+// (o dono confirma o recebimento depois) e "tempo esgotado".
 
 import { brl, dataBR } from '../format.js'
 import { barraContador } from './parciais.js'
@@ -63,8 +63,9 @@ export function telaDados({ config, sala, reserva, fotografo, restanteMs }) {
     </div>`
 }
 
-// ---- Passo: pagamento simulado ----
-export function telaPagamento({ sala, reserva, metodo, restanteMs }) {
+// ---- Passo: pagamento por Pix ----
+export function telaPagamento({ sala, reserva, chavePix, restanteMs }) {
+  const temChave = !!(chavePix || '').trim()
   return `
     <div class="topo-nav">
       <button class="link-voltar" data-acao="voltar-dados">&larr; Voltar</button>
@@ -79,50 +80,46 @@ export function telaPagamento({ sala, reserva, metodo, restanteMs }) {
         <p class="resumo-valor">${brl(reserva.valorTotal)}</p>
       </div>
 
-      <h2 class="bloco-titulo">Como você quer pagar?</h2>
-      <div class="metodos">
-        <button class="metodo ${metodo === 'pix' ? 'metodo-on' : ''}" data-metodo="pix">
-          <strong>Pix</strong><span>aprovação na hora</span>
-        </button>
-        <button class="metodo ${metodo === 'cartao' ? 'metodo-on' : ''}" data-metodo="cartao">
-          <strong>Cartão de crédito</strong><span>em 1x</span>
-        </button>
-      </div>
-
-      <p class="nota-simulacao">
-        Simulação: nenhum pagamento real é feito nesta fase. O gateway de verdade entra depois.
-      </p>
-
-      <button class="botao botao-grande" id="btn-pagar" ${metodo ? '' : 'disabled'}>
-        Pagar ${brl(reserva.valorTotal)}
-      </button>
+      <h2 class="bloco-titulo">Pague por Pix</h2>
+      ${
+        temChave
+          ? `
+            <div class="pix-caixa">
+              <span class="pix-rotulo">Chave Pix do estúdio</span>
+              <div class="pix-linha">
+                <code id="pix-chave">${chavePix}</code>
+                <button type="button" class="mini-btn mini-btn-primario" id="btn-copiar-pix">Copiar</button>
+              </div>
+              <span class="pix-status" id="pix-copiado-status"></span>
+            </div>
+            <p class="nota-simulacao">
+              Abra o app do seu banco, pague <strong>${brl(reserva.valorTotal)}</strong> nessa chave
+              e depois clica no botão abaixo. O estúdio confirma o recebimento e sua reserva vira definitiva.
+            </p>
+            <button class="botao botao-grande" id="btn-ja-paguei">Já fiz o Pix</button>
+          `
+          : `<p class="form-erro">Este estúdio ainda não cadastrou uma chave Pix. Entre em contato com ele pra combinar o pagamento.</p>`
+      }
     </div>`
 }
 
-export function telaProcessando() {
+// ---- Passo: esperando o estúdio confirmar o recebimento ----
+export function telaAguardandoPagamento({ sala, reserva }) {
   return `
     <div class="feito">
-      <div class="spinner"></div>
-      <h1 class="titulo-grande">Processando pagamento…</h1>
-      <p>Só um instante.</p>
-    </div>`
-}
-
-// ---- Passo: confirmação ----
-export function telaConfirmacao({ sala, reserva }) {
-  const metodoTexto = reserva.formaPagamento === 'pix' ? 'Pix' : 'Cartão de crédito'
-  return `
-    <div class="feito">
-      <div class="feito-check">&#10003;</div>
-      <h1 class="titulo-grande">Reserva confirmada!</h1>
+      <div class="feito-check feito-neutro">&#8987;</div>
+      <h1 class="titulo-grande">Aguardando confirmação</h1>
       <p>${sala.nome}</p>
       <p>${dataBR(reserva.data)} &middot; ${reserva.horaInicio} às ${reserva.horaFim}</p>
+      <p class="acesso-sub feito-obs">
+        Recebemos seu aviso de pagamento. O horário <strong>já está garantido pra você</strong> —
+        assim que o estúdio confirmar o Pix, sua reserva vira definitiva.
+      </p>
 
       <div class="total-bloco conf-bloco">
         <div class="total-linha"><span>Sala</span><span>${brl(reserva.valorSala)}</span></div>
         ${listaExtrasResumo(reserva.extras)}
-        <div class="total-linha total-final"><span>Total pago</span><span>${brl(reserva.valorTotal)}</span></div>
-        <div class="total-linha"><span>Forma de pagamento</span><span>${metodoTexto}</span></div>
+        <div class="total-linha total-final"><span>Total</span><span>${brl(reserva.valorTotal)}</span></div>
       </div>
 
       <button class="botao botao-grande" data-ir="minhaReserva">Ver minhas reservas</button>
