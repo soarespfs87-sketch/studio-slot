@@ -31,8 +31,8 @@ export function aplicarTema(config) {
   document.title = `${config.nome} · Studio Slot`
 
   // Ícone do app no celular / aba do navegador: ícone quadrado do dono,
-  // senão a logo, senão o ícone padrão que vem no /favicon.svg.
-  const icone = config.icone || config.logo || '/favicon.svg'
+  // senão a logo, senão o ícone padrão do Studio Slot (/favicon.png).
+  const icone = config.icone || config.logo || '/favicon.png'
   document.querySelector('#fav-icon')?.setAttribute('href', icone)
   document.querySelector('#fav-apple')?.setAttribute('href', icone)
 }
