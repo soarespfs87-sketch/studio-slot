@@ -21,7 +21,47 @@ export function telaEntrar({ erro } = {}) {
         <input type="password" id="e-senha" autocomplete="current-password" required /></label>
       <button class="botao botao-grande" type="submit">Entrar</button>
     </form>
+    <button class="link-troca" data-ir-acesso="esqueci">Esqueci minha senha</button>
     <button class="link-troca" data-ir-acesso="cadastro">Não tenho conta — criar agora</button>
+  `)
+}
+
+// Passo 1 da recuperação: pedir o e-mail e mandar o link.
+export function telaEsqueciSenha({ erro, enviado } = {}) {
+  if (enviado) {
+    return moldura(`
+      <div class="feito">
+        <div class="feito-check">&#9993;</div>
+        <h1 class="titulo-grande">Confira seu e-mail</h1>
+        <p>Mandamos um link pra você criar uma senha nova. Se não achar, dá uma olhada na caixa de spam.</p>
+        <button class="link-troca link-centro" data-ir-acesso="entrar">Voltar pro login</button>
+      </div>
+    `)
+  }
+  return moldura(`
+    <h1 class="titulo-grande">Esqueci minha senha</h1>
+    <p class="acesso-sub">Digite o e-mail da sua conta — mandamos um link pra criar uma senha nova.</p>
+    ${erro ? `<p class="form-erro">${erro}</p>` : ''}
+    <form id="form-esqueci" class="dono-form">
+      <label class="campo"><span>E-mail</span>
+        <input type="email" id="es-email" autocomplete="email" required /></label>
+      <button class="botao botao-grande" type="submit">Enviar link</button>
+    </form>
+    <button class="link-troca" data-ir-acesso="entrar">Voltar pro login</button>
+  `)
+}
+
+// Passo 2 da recuperação: a pessoa chegou aqui pelo link do e-mail.
+export function telaNovaSenha({ erro } = {}) {
+  return moldura(`
+    <h1 class="titulo-grande">Criar senha nova</h1>
+    <p class="acesso-sub">Escolha uma senha nova pra sua conta.</p>
+    ${erro ? `<p class="form-erro">${erro}</p>` : ''}
+    <form id="form-nova-senha" class="dono-form">
+      <label class="campo"><span>Senha nova (mín. 6 caracteres)</span>
+        <input type="password" id="np-senha" autocomplete="new-password" minlength="6" required /></label>
+      <button class="botao botao-grande" type="submit">Salvar senha</button>
+    </form>
   `)
 }
 

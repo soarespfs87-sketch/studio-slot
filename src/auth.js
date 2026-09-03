@@ -24,6 +24,20 @@ export async function sair() {
   await supabase.auth.signOut()
 }
 
+// Manda um e-mail com um link pra criar uma senha nova.
+export async function pedirRecuperacaoSenha(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/',
+  })
+  return { error }
+}
+
+// Define a senha nova (chamada depois que a pessoa clica no link do e-mail).
+export async function definirNovaSenha(senha) {
+  const { error } = await supabase.auth.updateUser({ password: senha })
+  return { error }
+}
+
 export async function sessaoAtual() {
   const { data } = await supabase.auth.getSession()
   return data.session
@@ -95,5 +109,9 @@ export function traduzErroAuth(error) {
     return 'E-mail inválido.'
   if (m.includes('email not confirmed'))
     return 'E-mail ainda não confirmado. (Nos testes, desligue "Confirm email" no Supabase.)'
+  if (m.includes('security purposes') || m.includes('after '))
+    return 'Espera um minutinho antes de pedir de novo.'
+  if (m.includes('session missing') || m.includes('session_not_found'))
+    return 'Esse link de recuperação expirou ou já foi usado. Peça um novo link.'
   return error.message || 'Não deu certo. Tente de novo.'
 }

@@ -13,14 +13,32 @@ import {
   souAdmin,
   meuEstudio,
   criarMeuEstudio,
+  pedirRecuperacaoSenha,
+  definirNovaSenha,
   traduzErroAuth,
 } from './auth.js'
-import { telaEntrar, telaCadastro, telaAguardando } from './telas/acesso.js'
+import {
+  telaEntrar,
+  telaCadastro,
+  telaAguardando,
+  telaEsqueciSenha,
+  telaNovaSenha,
+} from './telas/acesso.js'
 import { iniciar } from './app.js'
 
 const app = document.querySelector('#app')
 
+// A pessoa veio de um link de "esqueci minha senha"? O Supabase manda o
+// link com "#...type=recovery..." — a gente confere ANTES de qualquer
+// outra coisa (inclusive antes do slugDaURL do app.js ler o # como estúdio).
+function veioDeRecuperacaoSenha() {
+  const h = new URLSearchParams(location.hash.replace(/^#/, ''))
+  return h.get('type') === 'recovery'
+}
+
 export async function montarPortao() {
+  if (veioDeRecuperacaoSenha()) return mostrarNovaSenha()
+
   const s = await sessaoAtual()
   if (!s) return mostrarAcesso('entrar')
 
@@ -44,7 +62,12 @@ function mostrarAguardando(est) {
 }
 
 function mostrarAcesso(qual, dados = {}) {
-  app.innerHTML = qual === 'cadastro' ? telaCadastro(dados) : telaEntrar(dados)
+  app.innerHTML =
+    qual === 'cadastro'
+      ? telaCadastro(dados)
+      : qual === 'esqueci'
+        ? telaEsqueciSenha(dados)
+        : telaEntrar(dados)
 
   app.querySelectorAll('[data-ir-acesso]').forEach((b) =>
     b.addEventListener('click', () => mostrarAcesso(b.dataset.irAcesso)),
@@ -62,8 +85,37 @@ function mostrarAcesso(qual, dados = {}) {
     location.reload()
   })
 
+  const fEsqueci = app.querySelector('#form-esqueci')
+  fEsqueci?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    fEsqueci.querySelector('button').disabled = true
+    const { error } = await pedirRecuperacaoSenha(app.querySelector('#es-email').value.trim())
+    if (error) return mostrarAcesso('esqueci', { erro: traduzErroAuth(error) })
+    mostrarAcesso('esqueci', { enviado: true })
+  })
+
   const fCad = app.querySelector('#form-cadastro')
   if (fCad) ligarCadastro(fCad)
+}
+
+// Passo 2 da recuperação: definir a senha nova (a sessão de recuperação já
+// foi montada sozinha pelo supabase-js a partir do link do e-mail).
+function mostrarNovaSenha(dados = {}) {
+  app.innerHTML = telaNovaSenha(dados)
+
+  app.querySelector('#form-nova-senha').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const senha = app.querySelector('#np-senha').value
+    if (senha.length < 6) {
+      return mostrarNovaSenha({ erro: 'A senha precisa de pelo menos 6 caracteres.' })
+    }
+    e.target.querySelector('button').disabled = true
+    const { error } = await definirNovaSenha(senha)
+    if (error) return mostrarNovaSenha({ erro: traduzErroAuth(error) })
+    // limpa o link da URL e entra normal, já com a senha nova
+    history.replaceState(null, '', location.pathname + location.search)
+    location.reload()
+  })
 }
 
 function ligarCadastro(fCad) {
