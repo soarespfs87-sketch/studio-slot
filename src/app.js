@@ -40,7 +40,14 @@ import {
   reservaSeguraOHorario,
 } from './dados.js'
 import { gerarSlots, valorDoSlot, infoTemporada } from './agenda.js'
-import { podeRemarcar, calculoCancelamento, horasAteSessao, regrasReserva } from './reserva.js'
+import {
+  podeRemarcar,
+  calculoCancelamento,
+  horasAteSessao,
+  regrasReserva,
+  statusExibicao,
+  sessaoJaTerminou,
+} from './reserva.js'
 import { hojeISO, mmss, dataBR, hhmmParaMin } from './format.js'
 import { telaInicio } from './telas/inicio.js'
 import { telaDetalhe } from './telas/detalhe.js'
@@ -542,11 +549,18 @@ function ordenarReservas(a, b) {
 
 // ---- Lista "Minhas reservas" ----
 function renderMinhaReserva() {
-  const reservas = getMinhasReservas()
-    .map((r) => ({ ...r, sala: getSala(r.salaId) }))
+  const todas = getMinhasReservas()
+    .map((r) => ({ ...r, sala: getSala(r.salaId), statusEfetivo: statusExibicao(r) }))
     .sort(ordenarReservas)
 
-  app.innerHTML = telaMinhasReservas({ reservas })
+  // Próximas (o que ainda vai acontecer) x anteriores (concluídas / canceladas).
+  const encerrada = (r) => r.statusEfetivo === 'concluida' || r.statusEfetivo === 'cancelada'
+  const proximas = todas.filter((r) => !encerrada(r))
+  const anteriores = todas
+    .filter(encerrada)
+    .sort((a, b) => b.data.localeCompare(a.data) || b.horaInicio.localeCompare(a.horaInicio))
+
+  app.innerHTML = telaMinhasReservas({ proximas, anteriores })
   ligarNavegacao()
 
   app.querySelectorAll('[data-reserva]').forEach((el) => {
@@ -566,6 +580,7 @@ function renderReservaDetalhe() {
     sala,
     reserva,
     config,
+    statusEfetivo: statusExibicao(reserva),
     podeRemarcar: podeRemarcar(reserva),
     horasAteSessao: horasAteSessao(reserva),
     prazoRemarcar: regrasReserva().prazoRemarcar,
@@ -583,7 +598,11 @@ function renderReservaDetalhe() {
 // ---- Cancelar (mostra a política) ----
 function renderCancelar() {
   const reserva = getReserva(estado.reservaId)
-  if (!reserva || !['confirmada', 'aguardando_pagamento'].includes(reserva.status))
+  if (
+    !reserva ||
+    !['confirmada', 'aguardando_pagamento'].includes(reserva.status) ||
+    sessaoJaTerminou(reserva)
+  )
     return irPara({ tela: 'minhaReserva' })
 
   const sala = getSala(reserva.salaId)
@@ -1285,7 +1304,11 @@ async function renderDonoAgendaDia() {
             s.inicio < r.horaFim &&
             reservaSeguraOHorario(r),
         )
-        return { ...s, fotografo: r?.fotografoNome || '', statusReserva: r?.status || '' }
+        return {
+          ...s,
+          fotografo: r?.fotografoNome || '',
+          statusReserva: r ? statusExibicao(r) : '',
+        }
       })
       return {
         sala,

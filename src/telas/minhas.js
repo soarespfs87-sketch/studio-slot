@@ -22,6 +22,7 @@ const ROTULO_STATUS = {
   confirmada: 'Confirmada',
   aguardando_pagamento: 'Aguardando confirmação',
   cancelada: 'Cancelada',
+  concluida: 'Concluída',
 }
 
 // Lista de extras já contratados, em linhas de total.
@@ -36,7 +37,8 @@ function linhasExtras(extras) {
 }
 
 // ---- Lista: "Minhas reservas" ----
-export function telaMinhasReservas({ reservas }) {
+export function telaMinhasReservas({ proximas, anteriores }) {
+  const vazio = !proximas.length && !anteriores.length
   return `
     <div class="topo-nav">
       <button class="link-voltar" data-ir="inicio">&larr; Início</button>
@@ -46,22 +48,33 @@ export function telaMinhasReservas({ reservas }) {
       <h1 class="titulo-grande">Minhas reservas</h1>
 
       ${
-        reservas.length
-          ? `<div class="lista-reservas">
-              ${reservas.map(cardReserva).join('')}
-             </div>`
-          : `<p class="vazio">Você ainda não tem reservas. Volte ao início e escolha uma sala.</p>`
+        vazio
+          ? `<p class="vazio">Você ainda não tem reservas. Volte ao início e escolha uma sala.</p>`
+          : `
+        ${
+          proximas.length
+            ? `<h2 class="secao-reservas">Próximas</h2>
+               <div class="lista-reservas">${proximas.map(cardReserva).join('')}</div>`
+            : '<p class="vazio">Nenhuma reserva marcada. Volte ao início e escolha uma sala.</p>'
+        }
+        ${
+          anteriores.length
+            ? `<h2 class="secao-reservas">Anteriores</h2>
+               <div class="lista-reservas lista-reservas-passadas">${anteriores.map(cardReserva).join('')}</div>`
+            : ''
+        }`
       }
     </div>`
 }
 
 function cardReserva(r) {
   const nomeSala = r.sala ? r.sala.nome : 'Sala removida'
+  const st = r.statusEfetivo || r.status
   return `
     <button class="card-reserva" data-reserva="${r.id}">
       <div class="cr-topo">
         <span class="cr-sala">${nomeSala}</span>
-        <span class="badge-status badge-${r.status}">${ROTULO_STATUS[r.status] || r.status}</span>
+        <span class="badge-status badge-${st}">${ROTULO_STATUS[st] || st}</span>
       </div>
       <p class="cr-quando">${dataBR(r.data)} &middot; ${r.horaInicio} às ${r.horaFim}</p>
       <p class="cr-valor">${brl(r.valorTotal)}</p>
@@ -107,10 +120,33 @@ function blocoDoDia(config, reserva) {
     }`
 }
 
+// Só o canal de contato — usado em reservas já concluídas.
+function contatoSimples(config) {
+  const tel = config.contato?.telefone || ''
+  const wa = linkWhatsApp(tel)
+  if (!tel) return ''
+  return `
+    <div class="reserva-acessos">
+      <a class="botao botao-fantasma" href="${
+        wa || `tel:${tel.replace(/[^\d+]/g, '')}`
+      }" ${wa ? 'target="_blank" rel="noopener"' : ''}>Falar com o estúdio</a>
+    </div>`
+}
+
 // ---- Detalhe de uma reserva ----
-export function telaReservaDetalhe({ sala, reserva, config, podeRemarcar, horasAteSessao, prazoRemarcar }) {
-  const cancelada = reserva.status === 'cancelada'
-  const aguardando = reserva.status === 'aguardando_pagamento'
+export function telaReservaDetalhe({
+  sala,
+  reserva,
+  config,
+  statusEfetivo,
+  podeRemarcar,
+  horasAteSessao,
+  prazoRemarcar,
+}) {
+  const st = statusEfetivo || reserva.status
+  const cancelada = st === 'cancelada'
+  const concluida = st === 'concluida'
+  const aguardando = st === 'aguardando_pagamento'
   const rotuloTotal = cancelada ? 'Total da reserva' : aguardando ? 'Total (Pix avisado)' : 'Total pago'
 
   return `
@@ -122,12 +158,17 @@ export function telaReservaDetalhe({ sala, reserva, config, podeRemarcar, horasA
       <div class="resumo">
         <h1 class="titulo-grande">${sala.nome}</h1>
         <p>${dataBR(reserva.data)} &middot; ${reserva.horaInicio} às ${reserva.horaFim}</p>
-        <span class="badge-status badge-${reserva.status} badge-solo">${ROTULO_STATUS[reserva.status] || reserva.status}</span>
+        <span class="badge-status badge-${st} badge-solo">${ROTULO_STATUS[st] || st}</span>
       </div>
 
       ${
         aguardando
           ? `<p class="aviso-inline">Aguardando o estúdio confirmar o recebimento do Pix. O horário já está garantido pra você.</p>`
+          : ''
+      }
+      ${
+        concluida
+          ? `<p class="aviso-inline">Sessão realizada em ${dataBR(reserva.data)}. Obrigado pela reserva!</p>`
           : ''
       }
 
@@ -138,7 +179,8 @@ export function telaReservaDetalhe({ sala, reserva, config, podeRemarcar, horasA
         <div class="total-linha"><span>Forma de pagamento</span><span>Pix</span></div>
       </div>
 
-      ${cancelada ? '' : blocoDoDia(config, reserva)}
+      ${cancelada || concluida ? '' : blocoDoDia(config, reserva)}
+      ${concluida ? contatoSimples(config) : ''}
 
       ${
         cancelada
@@ -146,7 +188,9 @@ export function telaReservaDetalhe({ sala, reserva, config, podeRemarcar, horasA
                Reserva cancelada. Devolvido (simulado): <strong>${brl(reserva.valorDevolvido ?? reserva.valorTotal)}</strong>.
                ${reserva.valorRetido ? `Retido pelo estúdio: <strong>${brl(reserva.valorRetido)}</strong>.` : ''}
              </div>`
-          : `
+          : concluida
+            ? ''
+            : `
             <div class="acoes-reserva">
               <button class="botao botao-grande" data-acao="ir-remarcar" ${podeRemarcar ? '' : 'disabled'}>
                 Remarcar

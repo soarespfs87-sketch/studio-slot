@@ -868,6 +868,24 @@ input[type='number'],
   color: #5b6675;
 }
 
+.badge-concluida {
+  background: #eef1f4;
+  color: #5b6675;
+}
+
+/* Seções da lista "Minhas reservas" */
+.secao-reservas {
+  font-family: var(--fonte-titulo);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 22px 0 10px;
+  color: var(--cor-texto-suave);
+}
+
+.lista-reservas-passadas {
+  opacity: 0.72;
+}
+
 .badge-solo {
   display: inline-block;
   margin-top: 10px;

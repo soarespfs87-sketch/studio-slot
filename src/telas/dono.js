@@ -374,7 +374,9 @@ function slotAgendaDono(s) {
         ? '<span class="slot-mini">aguardando Pix</span>'
         : s.statusReserva === 'travada'
           ? '<span class="slot-mini">segurando</span>'
-          : ''
+          : s.statusReserva === 'concluida'
+            ? '<span class="slot-mini">realizada</span>'
+            : ''
     return `
       <div class="slot slot-off slot-ocupado">
         <span class="slot-hora">${s.inicio}</span>

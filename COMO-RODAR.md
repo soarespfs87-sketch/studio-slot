@@ -66,8 +66,11 @@ Link "Área do dono" no rodapé do início. De lá dá pra:
       ⚠️ Troque o e-mail `privacidade@studioslot.app` (const `CONTATO_PRIVACIDADE`)
       pelo canal real antes do beta. Versão em inglês fica para 2027.
 
+- [x] Status "concluída" — reserva confirmada cuja sessão já acabou aparece como
+      "Concluída" (calculado, não gravado no banco). "Minhas reservas" separa
+      **Próximas** de **Anteriores**; a Agenda do dono marca "realizada".
+
 ## Ainda pra fazer (backlog do MVP)
 - Notificações automáticas por e-mail (confirmação + lembrete 24h/2h) — adiado
 - Gateway de pagamento real (Pix + cartão) — hoje é Pix manual
-- Status "concluída" / check-out da reserva depois da sessão
 - Multi-idioma PT/EN e multi-moeda BRL/USD (lançamento comercial 2027)

@@ -37,9 +37,27 @@ export function inicioDaSessao(reserva) {
   return new Date(`${reserva.data}T${reserva.horaInicio}:00`)
 }
 
+// Momento em que a sessão termina (data + hora de fim).
+export function fimDaSessao(reserva) {
+  return new Date(`${reserva.data}T${reserva.horaFim}:00`)
+}
+
 // Horas de agora até o começo da sessão. Pode ser negativo (já passou).
 export function horasAteSessao(reserva, agora = Date.now()) {
   return (inicioDaSessao(reserva).getTime() - agora) / HORA_MS
+}
+
+// A sessão já acabou?
+export function sessaoJaTerminou(reserva, agora = Date.now()) {
+  return fimDaSessao(reserva).getTime() <= agora
+}
+
+// Status para MOSTRAR: uma reserva confirmada cuja sessão já acabou é
+// "concluída". Não é gravado no banco (o status lá continua 'confirmada') —
+// é só a leitura pro cliente e para os painéis separarem passado de futuro.
+export function statusExibicao(reserva, agora = Date.now()) {
+  if (reserva.status === 'confirmada' && sessaoJaTerminou(reserva, agora)) return 'concluida'
+  return reserva.status
 }
 
 // Só dá pra remarcar uma reserva confirmada e com folga suficiente.
