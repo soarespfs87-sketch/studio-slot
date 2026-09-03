@@ -1,0 +1,501 @@
+// Telas da Fase 5 — Painel do Dono
+// O estúdio cadastra salas, define preços em faixas, cria extras e
+// ajusta a própria identidade. Tudo fica salvo no navegador (localStorage).
+
+import { brl } from '../format.js'
+import { precosDaSala } from '../agenda.js'
+
+// ---- pedacinhos de formulário reaproveitados ----
+const esc = (v) =>
+  String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+
+function campoTexto(id, rotulo, valor, opc = {}) {
+  return `
+    <label class="campo dono-campo">
+      <span>${rotulo}</span>
+      <input type="${opc.tipo || 'text'}" id="${id}" value="${esc(valor)}"
+        ${opc.placeholder ? `placeholder="${esc(opc.placeholder)}"` : ''} />
+      ${opc.dica ? `<small class="campo-dica">${opc.dica}</small>` : ''}
+    </label>`
+}
+
+function campoNumero(id, rotulo, valor, opc = {}) {
+  return `
+    <label class="campo dono-campo">
+      <span>${rotulo}${opc.sufixo ? ` (${opc.sufixo})` : ''}</span>
+      <input type="number" id="${id}" value="${esc(valor)}" step="1"
+        ${opc.min != null ? `min="${opc.min}"` : ''} ${opc.max != null ? `max="${opc.max}"` : ''} />
+    </label>`
+}
+
+function campoArea(id, rotulo, valor, opc = {}) {
+  return `
+    <label class="campo dono-campo">
+      <span>${rotulo}</span>
+      <textarea id="${id}" rows="${opc.linhas || 3}">${esc(valor)}</textarea>
+      ${opc.dica ? `<small class="campo-dica">${opc.dica}</small>` : ''}
+    </label>`
+}
+
+function campoSelect(id, rotulo, valor, opcoes) {
+  return `
+    <label class="campo dono-campo">
+      <span>${rotulo}</span>
+      <select id="${id}">
+        ${opcoes
+          .map(
+            ([v, l]) =>
+              `<option value="${esc(v)}" ${String(v) === String(valor) ? 'selected' : ''}>${l}</option>`,
+          )
+          .join('')}
+      </select>
+    </label>`
+}
+
+function campoCor(id, rotulo, valor) {
+  return `
+    <label class="campo dono-campo dono-campo-cor">
+      <span>${rotulo}</span>
+      <input type="color" id="${id}" value="${esc(valor)}" />
+    </label>`
+}
+
+function campoCheck(id, rotulo, marcado) {
+  return `
+    <label class="termo dono-check">
+      <input type="checkbox" id="${id}" ${marcado ? 'checked' : ''} />
+      <span>${rotulo}</span>
+    </label>`
+}
+
+// Campo de imagem: botão "Escolher imagem" + prévia. Guarda a URL num
+// input escondido (o formulário lê esse valor, igual antes).
+function campoFoto(id, rotulo, valor, dica) {
+  const tem = !!valor
+  return `
+    <div class="campo dono-campo">
+      <span>${rotulo}</span>
+      <div class="foto-campo">
+        <img class="foto-preview" id="${id}-preview" src="${esc(valor || '')}" alt="" ${tem ? '' : 'hidden'} />
+        <label class="botao botao-fantasma foto-escolher">
+          Escolher imagem
+          <input type="file" id="${id}-arquivo" accept="image/png,image/jpeg,image/webp" hidden />
+        </label>
+        <button type="button" class="mini-btn" id="${id}-remover" ${tem ? '' : 'hidden'}>Tirar</button>
+        <span class="foto-status" id="${id}-status"></span>
+      </div>
+      <input type="hidden" id="${id}" value="${esc(valor || '')}" />
+      ${dica ? `<small class="campo-dica">${dica}</small>` : ''}
+    </div>`
+}
+
+function barraExcluir(acao, rotulo, confirmar) {
+  if (!confirmar) {
+    return `<button type="button" class="botao botao-grande botao-perigo" data-acao="${acao}">${rotulo}</button>`
+  }
+  return `
+    <div class="dono-confirma">
+      <p>Tem certeza? Isso não dá para desfazer.</p>
+      <div class="dono-confirma-botoes">
+        <button type="button" class="botao botao-perigo" data-acao="${acao}-ok">Excluir de vez</button>
+        <button type="button" class="botao botao-fantasma" data-acao="cancelar-exclusao">Cancelar</button>
+      </div>
+    </div>`
+}
+
+// Modelos em branco para "criar novo"
+export function salaEmBranco() {
+  return {
+    id: null,
+    nome: '',
+    tipo: 'fixa',
+    descricao: '',
+    fotos: [],
+    corFoto: '#E7E2DB',
+    capacidadeMax: 6,
+    metragem: 30,
+    equipamento: [],
+    ativa: true,
+    slotMinutos: 60,
+    precos: { diaUtil: 150, fimDeSemana: 190, feriado: 210 },
+    bufferAntes: 0,
+    bufferDepois: 0,
+    disponivelDe: null,
+    disponivelAte: null,
+  }
+}
+
+export function extraEmBranco() {
+  return { id: null, nome: '', valor: 0, salas: [] }
+}
+
+export function bloqueioEmBranco() {
+  return { id: null, salaId: null, tipo: 'diario', data: '', horaInicio: '12:00', horaFim: '13:00', motivo: '' }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Home do painel
+// ════════════════════════════════════════════════════════════════
+export function telaDonoHome({ config, nSalas, nExtras, nBloqueios }) {
+  return `
+    <div class="topo-nav">
+      <button class="link-voltar" data-ir="inicio">&larr; Voltar para o app</button>
+    </div>
+
+    <div class="reservar-corpo">
+      <h1 class="titulo-grande">Painel do dono</h1>
+      <p class="detalhe-desc">${config.nome}</p>
+
+      <div class="dono-menu">
+        <button class="dono-item" data-ir="donoSalas">
+          <span class="dono-item-nome">Salas e cenários</span>
+          <span class="dono-item-sub">${nSalas} cadastrada(s) &middot; fotos, preços, temporada, intervalos</span>
+        </button>
+        <button class="dono-item" data-ir="donoExtras">
+          <span class="dono-item-nome">Extras</span>
+          <span class="dono-item-sub">${nExtras} cadastrado(s) &middot; nome, valor, em quais salas</span>
+        </button>
+        <button class="dono-item" data-ir="donoBloqueios">
+          <span class="dono-item-nome">Bloqueios de agenda</span>
+          <span class="dono-item-sub">${nBloqueios} &middot; almoço, feriado, manutenção — horários que não atende</span>
+        </button>
+        <button class="dono-item" data-ir="donoIdentidade">
+          <span class="dono-item-nome">Identidade do estúdio</span>
+          <span class="dono-item-sub">nome, cores, horário, regras, feriados</span>
+        </button>
+      </div>
+    </div>`
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Salas — lista
+// ════════════════════════════════════════════════════════════════
+function linhaSala(s) {
+  return `
+    <div class="dono-linha ${s.ativa ? '' : 'dono-linha-off'}">
+      <div class="dl-info">
+        <span class="dl-nome">${s.nome}</span>
+        <span class="dl-sub">
+          ${s.tipo === 'sazonal' ? 'Sazonal' : 'Fixa'} &middot; ${s.slotMinutos} min &middot; ${brl(precosDaSala(s).diaUtil)}/h
+        </span>
+      </div>
+      <div class="dl-acoes">
+        <button class="mini-btn" data-acao="toggle-sala" data-id="${s.id}">${s.ativa ? 'Ativa' : 'Inativa'}</button>
+        <button class="mini-btn mini-btn-primario" data-acao="editar-sala" data-id="${s.id}">Editar</button>
+      </div>
+    </div>`
+}
+
+export function telaDonoSalas({ salas }) {
+  return `
+    <div class="topo-nav">
+      <button class="link-voltar" data-ir="donoHome">&larr; Painel</button>
+    </div>
+
+    <div class="reservar-corpo">
+      <div class="dono-cab">
+        <h1 class="titulo-grande">Salas e cenários</h1>
+        <button class="botao" data-acao="nova-sala">+ Nova sala</button>
+      </div>
+
+      <div class="dono-lista">
+        ${salas.map(linhaSala).join('') || '<p class="vazio">Nenhuma sala ainda.</p>'}
+      </div>
+    </div>`
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Salas — formulário
+// ════════════════════════════════════════════════════════════════
+export function telaDonoSalaForm({ sala, ehNova, erro, confirmarExclusao }) {
+  const p = sala.precos || precosDaSala(sala)
+  return `
+    <div class="topo-nav">
+      <button class="link-voltar" data-ir="donoSalas">&larr; Salas</button>
+    </div>
+
+    <form class="reservar-corpo dono-form" id="form-sala">
+      <h1 class="titulo-grande">${ehNova ? 'Nova sala' : esc(sala.nome)}</h1>
+      ${erro ? `<p class="form-erro">${erro}</p>` : ''}
+
+      ${campoTexto('f-nome', 'Nome', sala.nome)}
+      ${campoArea('f-descricao', 'Descrição', sala.descricao, { linhas: 2 })}
+      ${campoSelect('f-tipo', 'Tipo', sala.tipo, [
+        ['fixa', 'Sala fixa (sempre no ar)'],
+        ['sazonal', 'Cenário sazonal (só numa temporada)'],
+      ])}
+
+      <div class="dono-sazonal dono-grid2" ${sala.tipo === 'sazonal' ? '' : 'hidden'}>
+        ${campoTexto('f-de', 'Disponível de', sala.disponivelDe || '', { tipo: 'date' })}
+        ${campoTexto('f-ate', 'Disponível até', sala.disponivelAte || '', { tipo: 'date' })}
+      </div>
+
+      ${campoFoto('f-foto', 'Foto da sala', sala.fotos?.[0] || '', 'PNG, JPEG ou WEBP até 5 MB. Sem foto, aparece só a cor de fundo.')}
+      ${campoCor('f-cor', 'Cor de fundo', sala.corFoto || '#E7E2DB')}
+
+      <div class="dono-grid2">
+        ${campoNumero('f-capacidade', 'Capacidade', sala.capacidadeMax, { min: 1 })}
+        ${campoNumero('f-metragem', 'Metragem', sala.metragem, { min: 1, sufixo: 'm²' })}
+      </div>
+
+      ${campoArea('f-equipamento', 'Equipamento (um por linha)', (sala.equipamento || []).join('\n'), {
+        linhas: 4,
+      })}
+
+      <h2 class="bloco-titulo">Agenda</h2>
+      ${campoSelect('f-slot', 'Duração de cada horário', String(sala.slotMinutos), [
+        ['30', '30 min'],
+        ['60', '1 hora'],
+        ['90', '1h30'],
+        ['120', '2 horas'],
+      ])}
+      <p class="campo-dica">Tempo reservado entre uma sessão e a próxima, para montar e desmontar o set:</p>
+      <div class="dono-grid2">
+        ${campoNumero('f-buf-antes', 'Preparo antes', sala.bufferAntes || 0, { min: 0, sufixo: 'min' })}
+        ${campoNumero('f-buf-depois', 'Desmontagem depois', sala.bufferDepois || 0, { min: 0, sufixo: 'min' })}
+      </div>
+
+      <h2 class="bloco-titulo">Preço por hora</h2>
+      <div class="dono-grid3">
+        ${campoNumero('f-preco-util', 'Dia útil', p.diaUtil, { min: 0, sufixo: 'R$' })}
+        ${campoNumero('f-preco-fds', 'Fim de semana', p.fimDeSemana, { min: 0, sufixo: 'R$' })}
+        ${campoNumero('f-preco-fer', 'Feriado', p.feriado, { min: 0, sufixo: 'R$' })}
+      </div>
+
+      ${campoCheck('f-ativa', 'Sala ativa (aparece para os clientes)', sala.ativa)}
+
+      <button type="submit" class="botao botao-grande">Salvar sala</button>
+      ${ehNova ? '' : barraExcluir('excluir-sala', 'Excluir sala', confirmarExclusao)}
+    </form>`
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Extras — lista
+// ════════════════════════════════════════════════════════════════
+function linhaExtra(e) {
+  return `
+    <div class="dono-linha">
+      <div class="dl-info">
+        <span class="dl-nome">${e.nome}</span>
+        <span class="dl-sub">${brl(e.valor)} &middot; ${e.salas.length} sala(s)</span>
+      </div>
+      <div class="dl-acoes">
+        <button class="mini-btn mini-btn-primario" data-acao="editar-extra" data-id="${e.id}">Editar</button>
+      </div>
+    </div>`
+}
+
+export function telaDonoExtras({ extras }) {
+  return `
+    <div class="topo-nav">
+      <button class="link-voltar" data-ir="donoHome">&larr; Painel</button>
+    </div>
+
+    <div class="reservar-corpo">
+      <div class="dono-cab">
+        <h1 class="titulo-grande">Extras</h1>
+        <button class="botao" data-acao="novo-extra">+ Novo extra</button>
+      </div>
+
+      <div class="dono-lista">
+        ${extras.map(linhaExtra).join('') || '<p class="vazio">Nenhum extra ainda.</p>'}
+      </div>
+    </div>`
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Extras — formulário
+// ════════════════════════════════════════════════════════════════
+export function telaDonoExtraForm({ extra, salas, ehNovo, erro, confirmarExclusao }) {
+  return `
+    <div class="topo-nav">
+      <button class="link-voltar" data-ir="donoExtras">&larr; Extras</button>
+    </div>
+
+    <form class="reservar-corpo dono-form" id="form-extra">
+      <h1 class="titulo-grande">${ehNovo ? 'Novo extra' : esc(extra.nome)}</h1>
+      ${erro ? `<p class="form-erro">${erro}</p>` : ''}
+
+      ${campoTexto('f-nome', 'Nome', extra.nome)}
+      ${campoNumero('f-valor', 'Valor', extra.valor, { min: 0, sufixo: 'R$' })}
+
+      <fieldset class="dono-check-lista">
+        <legend>Disponível nas salas</legend>
+        ${
+          salas.length
+            ? salas
+                .map(
+                  (s) => `
+              <label class="check-linha">
+                <input type="checkbox" name="sala" value="${s.id}" ${extra.salas.includes(s.id) ? 'checked' : ''} />
+                <span>${s.nome}</span>
+              </label>`,
+                )
+                .join('')
+            : '<p class="vazio">Cadastre uma sala primeiro.</p>'
+        }
+      </fieldset>
+
+      <button type="submit" class="botao botao-grande">Salvar extra</button>
+      ${ehNovo ? '' : barraExcluir('excluir-extra', 'Excluir extra', confirmarExclusao)}
+    </form>`
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Bloqueios de agenda
+// ════════════════════════════════════════════════════════════════
+function textoBloqueio(b, salas) {
+  const quando =
+    b.tipo === 'diario'
+      ? 'Todo dia'
+      : b.data
+        ? new Date(b.data + 'T12:00:00').toLocaleDateString('pt-BR')
+        : 'Uma data'
+  const diaTodo = (b.horaInicio || '00:00') <= '00:00' && (b.horaFim || '23:59') >= '23:59'
+  const faixa = diaTodo ? 'dia todo' : `${b.horaInicio} às ${b.horaFim}`
+  const ondeSala = b.salaId ? salas.find((s) => s.id === b.salaId)?.nome || 'uma sala' : 'todas as salas'
+  return { quando, faixa, ondeSala }
+}
+
+function linhaBloqueio(b, salas) {
+  const { quando, faixa, ondeSala } = textoBloqueio(b, salas)
+  return `
+    <div class="dono-linha">
+      <div class="dl-info">
+        <span class="dl-nome">${b.motivo || 'Bloqueado'}</span>
+        <span class="dl-sub">${quando} &middot; ${faixa} &middot; ${ondeSala}</span>
+      </div>
+      <div class="dl-acoes">
+        <button class="mini-btn mini-btn-primario" data-acao="editar-bloqueio" data-id="${b.id}">Editar</button>
+      </div>
+    </div>`
+}
+
+export function telaDonoBloqueios({ bloqueios, salas }) {
+  return `
+    <div class="topo-nav">
+      <button class="link-voltar" data-ir="donoHome">&larr; Painel</button>
+    </div>
+
+    <div class="reservar-corpo">
+      <div class="dono-cab">
+        <h1 class="titulo-grande">Bloqueios de agenda</h1>
+        <button class="botao" data-acao="novo-bloqueio">+ Novo bloqueio</button>
+      </div>
+      <p class="detalhe-desc">Faixas de horário ou dias que o estúdio não atende. Elas somem da agenda dos clientes.</p>
+
+      <div class="dono-lista">
+        ${
+          bloqueios.length
+            ? bloqueios.map((b) => linhaBloqueio(b, salas)).join('')
+            : '<p class="vazio">Nenhum bloqueio. A agenda segue o horário de funcionamento.</p>'
+        }
+      </div>
+    </div>`
+}
+
+export function telaDonoBloqueioForm({ bloqueio, salas, ehNovo, erro, confirmarExclusao }) {
+  const b = bloqueio
+  return `
+    <div class="topo-nav">
+      <button class="link-voltar" data-ir="donoBloqueios">&larr; Bloqueios</button>
+    </div>
+
+    <form class="reservar-corpo dono-form" id="form-bloqueio">
+      <h1 class="titulo-grande">${ehNovo ? 'Novo bloqueio' : esc(b.motivo || 'Bloqueio')}</h1>
+      ${erro ? `<p class="form-erro">${erro}</p>` : ''}
+
+      ${campoTexto('f-motivo', 'Motivo (aparece na agenda)', b.motivo, { placeholder: 'Ex.: Almoço' })}
+
+      ${campoSelect('f-tipo', 'Quando', b.tipo, [
+        ['diario', 'Todo dia (ex.: almoço)'],
+        ['data', 'Uma data específica'],
+      ])}
+
+      <label class="campo dono-campo dono-bloq-data" ${b.tipo === 'data' ? '' : 'hidden'}>
+        <span>Data</span>
+        <input type="date" id="f-data" value="${esc(b.data || '')}" />
+      </label>
+
+      <div class="dono-grid2">
+        ${campoTexto('f-hora-inicio', 'Das', b.horaInicio || '', { tipo: 'time' })}
+        ${campoTexto('f-hora-fim', 'Até', b.horaFim || '', { tipo: 'time' })}
+      </div>
+      <label class="termo dono-check">
+        <input type="checkbox" id="f-dia-todo" ${
+          (b.horaInicio || '00:00') <= '00:00' && (b.horaFim || '23:59') >= '23:59' ? 'checked' : ''
+        } />
+        <span>Dia todo (ignora os horários acima)</span>
+      </label>
+
+      ${campoSelect('f-sala', 'Vale para', b.salaId || '', [
+        ['', 'Todas as salas'],
+        ...salas.map((s) => [s.id, s.nome]),
+      ])}
+
+      <button type="submit" class="botao botao-grande">Salvar bloqueio</button>
+      ${ehNovo ? '' : barraExcluir('excluir-bloqueio', 'Excluir bloqueio', confirmarExclusao)}
+    </form>`
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Identidade do estúdio
+// ════════════════════════════════════════════════════════════════
+export function telaDonoIdentidade({ config, erro }) {
+  const t = config.tema
+  return `
+    <div class="topo-nav">
+      <button class="link-voltar" data-ir="donoHome">&larr; Painel</button>
+    </div>
+
+    <form class="reservar-corpo dono-form" id="form-identidade">
+      <h1 class="titulo-grande">Identidade do estúdio</h1>
+      ${erro ? `<p class="form-erro">${erro}</p>` : ''}
+
+      ${campoTexto('f-nome', 'Nome do estúdio', config.nome)}
+      ${campoArea('f-descricao', 'Descrição curta', config.descricao, { linhas: 2 })}
+
+      <h2 class="bloco-titulo">Marca</h2>
+      ${campoFoto('f-logo', 'Logo (aparece no topo do app)', config.logo || '', 'Em branco = ícone padrão + o nome em texto.')}
+      ${campoCheck(
+        'f-logo-com-nome',
+        'Minha logo já mostra o nome do estúdio (esconder o texto no topo)',
+        config.logoComNome,
+      )}
+      ${campoFoto('f-icone', 'Ícone do app no celular', config.icone || '', 'Imagem quadrada. Em branco = usa a logo. Vira o ícone na tela inicial do celular e na aba.')}
+
+      <h2 class="bloco-titulo">Cores</h2>
+      <div class="dono-grid2">
+        ${campoCor('f-cor-primaria', 'Primária', t.primaria)}
+        ${campoCor('f-cor-fundo', 'Fundo do topo', t.fundo)}
+        ${campoCor('f-cor-superficie', 'Cartões', t.superficie)}
+        ${campoCor('f-cor-texto', 'Texto suave', t.textoSuave)}
+      </div>
+
+      <h2 class="bloco-titulo">Funcionamento</h2>
+      <div class="dono-grid2">
+        ${campoTexto('f-abre', 'Abre', config.horarioFuncionamento.abre, { tipo: 'time' })}
+        ${campoTexto('f-fecha', 'Fecha', config.horarioFuncionamento.fecha, { tipo: 'time' })}
+      </div>
+      ${campoArea(
+        'f-feriados',
+        'Feriados (uma data AAAA-MM-DD por linha)',
+        (config.feriados || []).join('\n'),
+        { linhas: 4, dica: 'Nesses dias vale a faixa de preço "feriado".' },
+      )}
+
+      <h2 class="bloco-titulo">Textos</h2>
+      ${campoArea('f-regras', 'Regras gerais', config.regrasGerais, { linhas: 3 })}
+      ${campoArea('f-cancelamento', 'Política de cancelamento', config.politicaCancelamento, { linhas: 2 })}
+
+      <h2 class="bloco-titulo">Contato</h2>
+      ${campoTexto('f-telefone', 'Telefone', config.contato.telefone)}
+      ${campoTexto('f-endereco', 'Endereço', config.contato.endereco)}
+
+      <button type="submit" class="botao botao-grande">Salvar identidade</button>
+    </form>`
+}

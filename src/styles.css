@@ -1,0 +1,1451 @@
+/* ────────────────────────────────────────────────────────────────
+   Studio Slot — base mobile-first
+   As cores vêm do tema do estúdio (ver theme.js). Aqui só usamos
+   as variáveis --cor-*.
+   ──────────────────────────────────────────────────────────────── */
+
+:root {
+  --cor-primaria: #c2410c;
+  --cor-primaria-escura: #9a3412;
+  --cor-fundo: #1c1917;
+  --cor-superficie: #fdfcfb;
+  --cor-texto-suave: #78716c;
+  --cor-borda: #ece7e1;
+
+  --fonte-titulo: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --fonte-texto: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --raio: 16px;
+  --sombra: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: var(--cor-fundo);
+  color: #1c1917;
+  font-family: var(--fonte-texto);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  max-width: 640px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--cor-superficie);
+}
+
+.titulo-grande {
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  font-size: 1.5rem;
+}
+
+.bloco-titulo {
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin: 22px 0 8px;
+}
+
+/* ---- Cabeçalho do estúdio ---- */
+.cabecalho {
+  padding: 28px 20px 22px;
+  background: var(--cor-fundo);
+  color: var(--cor-superficie);
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.marca svg {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+
+.marca .nome {
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  font-size: 1.35rem;
+  letter-spacing: 0.2px;
+}
+
+/* Logo do estúdio no topo (quando o dono cadastra uma) */
+.marca-logo {
+  height: 32px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+  display: block;
+  border-radius: 6px;
+}
+
+.cabecalho .descricao {
+  margin-top: 10px;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ---- Filtro de data ---- */
+.barra-filtro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--cor-borda);
+  font-size: 0.85rem;
+}
+
+.barra-filtro label {
+  color: var(--cor-texto-suave);
+}
+
+input[type='date'],
+input[type='time'],
+input[type='number'],
+.campo input,
+.campo textarea,
+.campo select {
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+  padding: 9px 12px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  background: #fff;
+  color: #1c1917;
+  width: 100%;
+}
+
+.campo textarea {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ---- Lista de salas ---- */
+.secao-titulo {
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  font-size: 1.1rem;
+  padding: 22px 20px 10px;
+}
+
+.lista-salas {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 16px 40px;
+}
+
+.card-sala {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  overflow: hidden;
+  background: #fff;
+  box-shadow: var(--sombra);
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+
+.card-sala:active {
+  transform: scale(0.99);
+}
+
+.card-sala:focus-visible {
+  outline: 2px solid var(--cor-primaria);
+  outline-offset: 2px;
+}
+
+.card-sala .foto,
+.detalhe-foto {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 12px;
+}
+
+.card-sala .foto {
+  height: 150px;
+}
+
+/* Foto de capa da sala: cobre a área toda, por cima da cor de fundo. */
+.capa-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.card-sala .foto .badge,
+.detalhe-foto .badge {
+  position: relative;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.72rem;
+  padding: 4px 9px;
+  border-radius: 999px;
+}
+
+.aperture {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 22px;
+  height: 22px;
+  opacity: 0.5;
+  color: #fff;
+}
+
+.aperture-grande {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 34px;
+  height: 34px;
+  opacity: 0.45;
+  color: #fff;
+}
+
+.card-sala .corpo {
+  padding: 14px 16px 16px;
+}
+
+.card-sala .nome-sala {
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.card-sala .desc-sala {
+  color: var(--cor-texto-suave);
+  font-size: 0.88rem;
+  margin-top: 4px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
+
+.card-sala .rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.preco {
+  font-weight: 600;
+  color: var(--cor-primaria);
+  white-space: nowrap;
+}
+
+.preco small {
+  color: var(--cor-texto-suave);
+  font-weight: 400;
+}
+
+.ver-mais {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--cor-primaria);
+}
+
+/* ---- Botões ---- */
+.botao {
+  appearance: none;
+  border: none;
+  background: var(--cor-primaria);
+  color: #fff;
+  font-family: var(--fonte-texto);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 9px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.botao:active {
+  background: var(--cor-primaria-escura);
+}
+
+.botao[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.botao-grande {
+  display: block;
+  width: 100%;
+  padding: 14px 18px;
+  font-size: 0.95rem;
+  margin-top: 22px;
+}
+
+/* ---- Navegação de topo ---- */
+.topo-nav {
+  padding: 14px 12px;
+}
+
+.link-voltar {
+  appearance: none;
+  border: none;
+  background: none;
+  font-family: var(--fonte-texto);
+  font-size: 0.9rem;
+  color: var(--cor-texto-suave);
+  cursor: pointer;
+  padding: 6px 8px;
+}
+
+/* ---- Detalhe da sala ---- */
+.detalhe-foto {
+  height: 220px;
+}
+
+.detalhe-corpo {
+  padding: 8px 20px 40px;
+}
+
+.detalhe-desc {
+  margin-top: 6px;
+  color: var(--cor-texto-suave);
+}
+
+.lista-equip {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lista-equip li {
+  padding-left: 18px;
+  position: relative;
+  font-size: 0.9rem;
+}
+
+.lista-equip li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cor-primaria);
+}
+
+.tabela-preco {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tabela-preco div {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.tabela-preco strong {
+  color: var(--cor-primaria);
+}
+
+/* ---- Agenda ---- */
+.agenda-cab {
+  padding: 4px 20px 8px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.campo span {
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
+
+.agenda-info {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
+.grade-slots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 16px 20px 4px;
+}
+
+.slot {
+  appearance: none;
+  border: 1px solid var(--cor-borda);
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+}
+
+.slot:active {
+  background: #faf6f2;
+}
+
+.slot-hora {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.slot-tag {
+  font-size: 0.72rem;
+  color: var(--cor-primaria);
+}
+
+.slot-off {
+  background: #f4f1ee;
+  color: var(--cor-texto-suave);
+  cursor: not-allowed;
+}
+
+.slot-off .slot-tag {
+  color: var(--cor-texto-suave);
+}
+
+.vazio {
+  padding: 10px 20px;
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+}
+
+/* ---- Reservar (dados + termo) ---- */
+.reservar-corpo {
+  padding: 4px 20px 44px;
+}
+
+.contador {
+  background: #fef3ec;
+  border: 1px solid #f6d9c6;
+  color: var(--cor-primaria-escura);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.contador strong {
+  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+}
+
+.contador-alerta {
+  background: #fde8e8;
+  border-color: #f4c2c2;
+  color: #b91c1c;
+}
+
+.resumo {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+}
+
+.resumo p {
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+}
+
+.resumo-linha {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: #1c1917 !important;
+}
+
+.resumo-valor {
+  margin-top: 8px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--cor-primaria) !important;
+}
+
+/* ---- Extras ---- */
+.lista-extras {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.extra {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+}
+
+.extra-on {
+  border-color: var(--cor-primaria);
+  background: #fef6f1;
+}
+
+.extra-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.extra-nome {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.extra-valor {
+  font-size: 0.78rem;
+  color: var(--cor-texto-suave);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stepper-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--cor-borda);
+  background: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--cor-primaria);
+}
+
+.stepper-btn[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.stepper-qtd {
+  min-width: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.extra-subtotal {
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-width: 58px;
+  text-align: right;
+}
+
+/* ---- Bloco de total ---- */
+.total-bloco {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+}
+
+.total-linha {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  padding: 4px 0;
+  color: var(--cor-texto-suave);
+}
+
+.total-final {
+  border-top: 1px solid var(--cor-borda);
+  margin-top: 6px;
+  padding-top: 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1c1917;
+}
+
+.total-final span:last-child {
+  color: var(--cor-primaria);
+}
+
+/* ---- Pagamento ---- */
+.metodos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.metodo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 14px 16px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  text-align: left;
+}
+
+.metodo strong {
+  font-size: 0.95rem;
+}
+
+.metodo span {
+  font-size: 0.78rem;
+  color: var(--cor-texto-suave);
+}
+
+.metodo-on {
+  border-color: var(--cor-primaria);
+  background: #fef6f1;
+  box-shadow: inset 0 0 0 1px var(--cor-primaria);
+}
+
+.nota-simulacao {
+  margin-top: 14px;
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
+
+.conf-bloco {
+  text-align: left;
+  margin: 22px auto 0;
+  max-width: 340px;
+}
+
+.conf-extras {
+  border-top: 1px solid var(--cor-borda);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+/* ---- Spinner ---- */
+.spinner {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 18px;
+  border: 4px solid var(--cor-borda);
+  border-top-color: var(--cor-primaria);
+  border-radius: 50%;
+  animation: girar 0.9s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.termo {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 18px;
+  font-size: 0.88rem;
+}
+
+.termo input {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  accent-color: var(--cor-primaria);
+}
+
+.regras {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
+.regras summary {
+  cursor: pointer;
+  color: var(--cor-primaria);
+}
+
+.regras p {
+  margin-top: 8px;
+}
+
+/* ---- Telas finais ---- */
+.feito {
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.feito p {
+  margin-top: 8px;
+  color: var(--cor-texto-suave);
+}
+
+.feito-obs {
+  margin-top: 16px !important;
+}
+
+.feito-check {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--cor-primaria);
+  color: #fff;
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feito-x {
+  background: #b91c1c;
+}
+
+/* ---- Aviso de fase ---- */
+.aviso-fase {
+  margin: 24px 20px 40px;
+  padding: 12px 14px;
+  border: 1px dashed var(--cor-borda);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Fase 3 — Minha Reserva: lista, detalhe, cancelar e remarcar
+   ════════════════════════════════════════════════════════════════ */
+
+/* Link "Minhas reservas" no cabeçalho do estúdio */
+.cab-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.link-minhas {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--cor-superficie);
+  font-family: var(--fonte-texto);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 7px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex: none;
+}
+
+.link-minhas:active {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Lista de reservas */
+.lista-reservas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.card-reserva {
+  appearance: none;
+  text-align: left;
+  width: 100%;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+}
+
+.card-reserva:active {
+  background: #faf6f2;
+}
+
+.cr-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cr-sala {
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.cr-quando {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
+.cr-valor {
+  margin-top: 4px;
+  font-weight: 600;
+  color: var(--cor-primaria);
+}
+
+/* Etiqueta de status */
+.badge-status {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.badge-confirmada {
+  background: #e7f4ec;
+  color: #1c7c43;
+}
+
+.badge-cancelada {
+  background: #f1eeec;
+  color: var(--cor-texto-suave);
+}
+
+.badge-solo {
+  display: inline-block;
+  margin-top: 10px;
+}
+
+/* Ações no detalhe da reserva */
+.acoes-reserva {
+  margin-top: 24px;
+}
+
+.acoes-reserva .botao-grande {
+  margin-top: 12px;
+}
+
+.botao-perigo {
+  background: #b91c1c;
+}
+
+.botao-perigo:active {
+  background: #991b1b;
+}
+
+.acao-motivo {
+  margin-top: 12px;
+  font-size: 0.82rem;
+  color: var(--cor-texto-suave);
+}
+
+.aviso-inline {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  background: #faf7f4;
+  font-size: 0.88rem;
+}
+
+/* Bloco da política de cancelamento */
+.politica-bloco {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  border: 1px solid var(--cor-borda);
+}
+
+.politica-bloco p + p {
+  margin-top: 6px;
+}
+
+.politica-ok {
+  background: #e7f4ec;
+  border-color: #bfe3cd;
+  color: #1c5f39;
+}
+
+.politica-taxa {
+  background: #fdf1e7;
+  border-color: #f6d9c6;
+  color: var(--cor-primaria-escura);
+}
+
+/* De → Para da remarcação */
+.de-para {
+  margin-top: 18px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dp-linha {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+}
+
+.dp-de {
+  color: var(--cor-texto-suave);
+}
+
+.dp-para {
+  background: #fef6f1;
+  font-weight: 600;
+}
+
+.dp-rotulo {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cor-texto-suave);
+  flex: none;
+  width: 42px;
+}
+
+.dp-seta {
+  text-align: center;
+  color: var(--cor-texto-suave);
+  font-size: 1rem;
+  padding: 2px 0;
+}
+
+/* Check neutro (cancelamento concluído) */
+.feito-neutro {
+  background: #78716c;
+}
+
+/* Link centralizado abaixo de um botão nas telas finais */
+.link-centro {
+  display: block;
+  margin: 10px auto 0;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Fase 4 — Cenário sazonal + buffer entre sessões
+   ════════════════════════════════════════════════════════════════ */
+
+/* Etiqueta de temporada (no card, na agenda, na remarcação) */
+.tag-temporada {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--cor-primaria);
+}
+
+/* Faixa de info na tela de detalhe (temporada / buffer) */
+.info-faixa {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--cor-borda);
+  border-left: 3px solid var(--cor-primaria);
+  border-radius: 8px;
+  background: #faf7f4;
+  font-size: 0.85rem;
+}
+
+.info-faixa + .info-faixa {
+  margin-top: 8px;
+}
+
+/* Painel que aparece no lugar da grade quando a data está fora da temporada */
+.fora-temporada {
+  margin: 16px 20px 4px;
+  padding: 16px;
+  border: 1px dashed var(--cor-borda);
+  border-radius: 12px;
+  background: #faf7f4;
+  font-size: 0.9rem;
+}
+
+.fora-temporada p + p {
+  margin-top: 8px;
+  color: var(--cor-texto-suave);
+}
+
+/* Slot bloqueado pelo tempo de montagem/desmontagem de uma reserva vizinha */
+.slot-preparo {
+  background: repeating-linear-gradient(
+    -45deg,
+    #f4f1ee,
+    #f4f1ee 6px,
+    #ece6df 6px,
+    #ece6df 12px
+  );
+}
+
+.slot-preparo .slot-tag {
+  color: var(--cor-primaria);
+  opacity: 0.75;
+}
+
+/* Slot dentro de um bloqueio do dono (almoço, feriado...) */
+.slot-bloqueado {
+  background: #f1eeeb;
+}
+
+.slot-bloqueado .slot-tag {
+  font-style: italic;
+  color: var(--cor-texto-suave);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Fase 5 — Painel do Dono
+   ════════════════════════════════════════════════════════════════ */
+
+/* Rodapé do início: selo da plataforma + link do dono */
+.rodape-app {
+  padding: 28px 20px 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid var(--cor-borda);
+  margin-top: 8px;
+}
+
+/* Selo discreto da empresa que desenvolve o app (Studio Slot) */
+.selo-dev {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  opacity: 0.55;
+}
+
+.selo-dev-logo {
+  width: 104px;
+  height: auto;
+  display: block;
+}
+
+.selo-dev-txt {
+  font-size: 0.66rem;
+  letter-spacing: 0.02em;
+  color: var(--cor-texto-suave);
+}
+
+.link-dono {
+  appearance: none;
+  border: none;
+  background: none;
+  font-family: var(--fonte-texto);
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Menu do painel */
+.dono-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.dono-item {
+  appearance: none;
+  text-align: left;
+  width: 100%;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dono-item:active {
+  background: #faf6f2;
+}
+
+.dono-item-nome {
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+
+.dono-item-sub {
+  font-size: 0.82rem;
+  color: var(--cor-texto-suave);
+}
+
+/* Cabeçalho de seção com botão à direita */
+.dono-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+/* Lista de salas / extras */
+.dono-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.dono-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.dono-linha-off {
+  opacity: 0.6;
+}
+
+.dl-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dl-nome {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.dl-sub {
+  font-size: 0.78rem;
+  color: var(--cor-texto-suave);
+}
+
+.dl-acoes {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+.mini-btn {
+  appearance: none;
+  border: 1px solid var(--cor-borda);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-family: var(--fonte-texto);
+  font-weight: 600;
+  color: var(--cor-texto-suave);
+  cursor: pointer;
+}
+
+.mini-btn-primario {
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+}
+
+/* Formulários do painel */
+.dono-form .campo {
+  margin-top: 14px;
+}
+
+.campo-dica {
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+}
+
+.dono-grid2,
+.dono-grid3 {
+  display: grid;
+  gap: 12px;
+}
+
+.dono-grid2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.dono-grid3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.dono-grid2 .campo,
+.dono-grid3 .campo {
+  margin-top: 14px;
+}
+
+.dono-campo-cor input[type='color'] {
+  width: 100%;
+  height: 40px;
+  padding: 2px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.dono-check {
+  margin-top: 18px;
+}
+
+.dono-check-lista {
+  margin-top: 18px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.dono-check-lista legend {
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+  padding: 0 6px;
+}
+
+.check-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 0.9rem;
+}
+
+.check-linha input {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  accent-color: var(--cor-primaria);
+}
+
+.form-erro {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fde8e8;
+  border: 1px solid #f4c2c2;
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
+.dono-confirma {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #f4c2c2;
+  background: #fdf1f1;
+  border-radius: 12px;
+  font-size: 0.88rem;
+}
+
+.dono-confirma-botoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.botao-fantasma {
+  background: none;
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto-suave);
+}
+
+.botao-fantasma:active {
+  background: #f4f1ee;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Etapa 6.3b — telas de acesso (entrar / criar conta)
+   ════════════════════════════════════════════════════════════════ */
+
+.acesso {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 20px;
+  background: var(--cor-superficie);
+}
+
+.acesso-caixa {
+  width: 100%;
+  max-width: 380px;
+}
+
+.acesso-caixa .titulo-grande {
+  margin-bottom: 4px;
+}
+
+.acesso-sub {
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+/* Só a frase da tela de login é centralizada */
+.acesso-frase {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.acesso .dono-form {
+  padding: 0;
+}
+
+.endereco-linha {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: var(--cor-texto-suave);
+}
+
+.endereco-linha input {
+  flex: 1;
+}
+
+.link-troca {
+  display: block;
+  margin: 16px auto 0;
+  appearance: none;
+  border: none;
+  background: none;
+  font-family: var(--fonte-texto);
+  font-size: 0.88rem;
+  color: var(--cor-primaria);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.acesso-rodape {
+  opacity: 0.9;
+  margin-top: 64px;
+}
+
+/* escolha "sou fotógrafo" / "tenho um estúdio" */
+.tipo-escolha {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.tipo-op {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.tipo-op input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tipo-op strong {
+  font-size: 0.92rem;
+}
+
+.tipo-op span {
+  font-size: 0.78rem;
+  color: var(--cor-texto-suave);
+}
+
+.tipo-op-on {
+  border-color: var(--cor-primaria);
+  background: #fef6f1;
+  box-shadow: inset 0 0 0 1px var(--cor-primaria);
+}
+
+/* rodapé do início: fila de links */
+.rodape-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 18px;
+}
+
+/* ── Campo de imagem (Escolher imagem + prévia) ── */
+.foto-campo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.foto-preview {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--cor-borda);
+  background: #f4f1ee;
+  flex: none;
+}
+
+.foto-escolher {
+  cursor: pointer;
+}
+
+.foto-status {
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
