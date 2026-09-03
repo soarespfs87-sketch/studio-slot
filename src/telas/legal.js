@@ -4,8 +4,9 @@
 // os links viram âncoras de hash e o "voltar" recarrega o app na raiz.
 // Dentro do app, tudo passa pelo router (data-ir).
 
-// Troque este e-mail pelo canal real de privacidade do estúdio / da plataforma.
-export const CONTATO_PRIVACIDADE = 'privacidade@studioslot.app'
+// Canal de contato para questões de privacidade / LGPD e dúvidas sobre os termos.
+// TODO: trocar por um e-mail dedicado (ex.: contato@studioslot.app) quando houver domínio.
+export const CONTATO_PRIVACIDADE = 'soarespfs87@gmail.com'
 
 const ATUALIZADO_EM = '3 de setembro de 2026'
 
