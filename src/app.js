@@ -1419,7 +1419,7 @@ async function renderPlataforma() {
   })
 }
 
-// Slug do estúdio pedido na URL: studioslot.app/nome, ?e=nome ou #nome
+// Slug do estúdio pedido na URL: studioslot.app.br/nome, ?e=nome ou #nome
 function slugDaURL() {
   const q = new URLSearchParams(location.search).get('e')
   const h = location.hash.replace(/^#\/?/, '')

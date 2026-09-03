@@ -1,6 +1,6 @@
 // Telas de acesso: entrar e criar conta. Estúdios e fotógrafos, mesmo login.
 
-import { rodapeStudioSlot } from '../ui.js'
+import { rodapeStudioSlot, DOMINIO } from '../ui.js'
 
 function moldura(conteudo) {
   return `
@@ -119,7 +119,7 @@ export function telaSemEstudio() {
       <label class="campo">
         <span>Tem o endereço do estúdio?</span>
         <div class="endereco-linha">
-          <span>studioslot.app/</span>
+          <span>${DOMINIO}/</span>
           <input type="text" id="s-slug" placeholder="nome-do-estudio" />
         </div>
       </label>
@@ -144,7 +144,7 @@ export function telaEscolherEstudio({ estudios, ehAdmin }) {
                   (e) => `
               <button class="card-reserva" data-estudio-slug="${e.slug}">
                 <div class="cr-topo"><span class="cr-sala">${e.nome}</span></div>
-                <p class="cr-quando">studioslot.app/${e.slug}</p>
+                <p class="cr-quando">${DOMINIO}/${e.slug}</p>
               </button>`,
                 )
                 .join('')
@@ -166,7 +166,7 @@ export function telaAguardando({ estudio }) {
       <div class="feito-check feito-neutro">&#8987;</div>
       <h1 class="titulo-grande">Estúdio em análise</h1>
       <p>O <strong>${estudio.nome}</strong> foi cadastrado no endereço
-         <strong>studioslot.app/${estudio.slug}</strong> e está aguardando a
+         <strong>${DOMINIO}/${estudio.slug}</strong> e está aguardando a
          liberação da plataforma (depois da confirmação do plano).</p>
       <p class="acesso-sub">Assim que liberar, seu painel abre aqui.</p>
       <div class="rodape-links" style="margin-top: 20px">

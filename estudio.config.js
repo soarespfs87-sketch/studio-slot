@@ -7,7 +7,7 @@
 // ────────────────────────────────────────────────────────────────
 
 export const estudioConfig = {
-  slug: 'estudio-lumen', // vira o endereço: studioslot.app/estudio-lumen
+  slug: 'estudio-lumen', // vira o endereço: studioslot.app.br/estudio-lumen
   nome: 'Estúdio Lúmen',
   descricao: 'Sala e cenários para ensaios fotográficos no coração da cidade.',
   regrasGerais:

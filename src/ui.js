@@ -2,6 +2,11 @@
 //  Pedacinhos de interface reaproveitados
 // ────────────────────────────────────────────────────────────────
 
+// Domínio público do app — aparece nos textos "endereço do estúdio".
+// (O roteamento por slug funciona em qualquer host; isto é só o texto.)
+export const DOMINIO = 'studioslot.app.br'
+export const enderecoEstudio = (slug) => `${DOMINIO}/${slug}`
+
 // Ícone de abertura de lente. `cls` opcional para estilizar.
 export const aperture = (cls = '') => `
 <svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">

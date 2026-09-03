@@ -2,6 +2,7 @@
 // e guarda o controle manual da mensalidade (faixa, vencimento, link LastLink).
 
 import { supabase } from '../supabase.js'
+import { DOMINIO } from '../ui.js'
 
 export const FAIXAS_PLANO = [
   ['basico', 'Básico · R$197 (até 2 salas)'],
@@ -62,7 +63,7 @@ function linhaEstudio(e, hoje) {
       <div class="dl-info">
         <span class="dl-nome">${e.nome}</span>
         <span class="dl-sub">
-          studioslot.app/${e.slug} &middot; ${e.plano_ativo ? 'plano ativo' : 'pendente'}
+          ${DOMINIO}/${e.slug} &middot; ${e.plano_ativo ? 'plano ativo' : 'pendente'}
           &middot; ${rotuloFaixa(e.plano_faixa)}
           ${venc ? `&middot; <span class="${venc.classe}">${venc.texto}</span>` : ''}
         </span>
