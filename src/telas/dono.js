@@ -160,6 +160,10 @@ export function telaDonoHome({ config, nSalas, nExtras, nBloqueios, nPagamentosP
         </button>`
             : ''
         }
+        <button class="dono-item" data-ir="donoDashboard">
+          <span class="dono-item-nome">Resumo do estúdio</span>
+          <span class="dono-item-sub">reservas do dia, horas vendidas, faturamento e ocupação</span>
+        </button>
         <button class="dono-item" data-ir="donoSalas">
           <span class="dono-item-nome">Salas e cenários</span>
           <span class="dono-item-sub">${nSalas} cadastrada(s) &middot; fotos, preços, temporada, intervalos</span>
@@ -177,6 +181,105 @@ export function telaDonoHome({ config, nSalas, nExtras, nBloqueios, nPagamentosP
           <span class="dono-item-sub">nome, cores, horário, regras, feriados, chave Pix</span>
         </button>
       </div>
+    </div>`
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Resumo do estúdio (Fase 6) — dashboard do dono
+// ════════════════════════════════════════════════════════════════
+const ROTULO_STATUS_DASH = {
+  confirmada: 'Confirmada',
+  aguardando_pagamento: 'Aguardando Pix',
+  travada: 'Segurando horário',
+  cancelada: 'Cancelada',
+}
+
+function cartao(rotulo, valor, sub) {
+  return `
+    <div class="dash-card">
+      <span class="dash-num">${valor}</span>
+      <span class="dash-rotulo">${rotulo}</span>
+      ${sub ? `<span class="dash-sub">${sub}</span>` : ''}
+    </div>`
+}
+
+function linhaDoDia(s) {
+  return `
+    <div class="dash-dia-linha">
+      <span class="dash-dia-hora">${s.hora}</span>
+      <span class="dash-dia-info">
+        <span class="dash-dia-sala">${esc(s.salaNome)}</span>
+        <span class="dash-dia-fot">${esc(s.fotografo || 'Fotógrafo')}</span>
+      </span>
+      <span class="badge-status badge-${s.status}">${ROTULO_STATUS_DASH[s.status] || s.status}</span>
+    </div>`
+}
+
+function barraOcupacao(o) {
+  return `
+    <div class="dash-ocup-linha">
+      <div class="dash-ocup-topo">
+        <span class="dash-ocup-nome">${esc(o.salaNome)}</span>
+        <span class="dash-ocup-pct">${o.pct}%</span>
+      </div>
+      <div class="dash-ocup-trilho">
+        <div class="dash-ocup-preenche" style="width:${Math.min(100, o.pct)}%"></div>
+      </div>
+      <span class="dash-ocup-detalhe">${o.horasVendidas} h vendidas de ${o.horasDisponiveis} h no mês</span>
+    </div>`
+}
+
+export function telaDonoDashboard({ resumo }) {
+  const { mesNome, semDados, hoje, mes, ocupacao } = resumo
+
+  if (semDados) {
+    return `
+      <div class="topo-nav">
+        <button class="link-voltar" data-ir="donoHome">&larr; Painel</button>
+      </div>
+      <div class="reservar-corpo">
+        <h1 class="titulo-grande">Resumo do estúdio</h1>
+        <p class="vazio">Ainda não há reservas por aqui. Quando os fotógrafos começarem a reservar, os números aparecem nesta tela.</p>
+      </div>`
+  }
+
+  return `
+    <div class="topo-nav">
+      <button class="link-voltar" data-ir="donoHome">&larr; Painel</button>
+    </div>
+
+    <div class="reservar-corpo">
+      <h1 class="titulo-grande">Resumo do estúdio</h1>
+
+      <h2 class="dash-titulo">Hoje</h2>
+      <div class="dash-grid">
+        ${cartao('sessões hoje', hoje.sessoes, hoje.aConfirmar ? `${hoje.aConfirmar} esperando Pix` : '')}
+        ${cartao('horas reservadas', `${hoje.horas} h`)}
+        ${cartao('faturamento do dia', brl(hoje.faturamento), 'já confirmado')}
+      </div>
+
+      ${
+        hoje.lista.length
+          ? `<div class="dash-dia-lista">${hoje.lista.map(linhaDoDia).join('')}</div>`
+          : '<p class="vazio">Nenhuma sessão marcada para hoje.</p>'
+      }
+
+      <h2 class="dash-titulo">Este mês &middot; ${mesNome}</h2>
+      <div class="dash-grid">
+        ${cartao('faturamento', brl(mes.faturamento), mes.retido ? `+ ${brl(mes.retido)} retido de cancelamentos` : 'confirmado')}
+        ${cartao('sessões', mes.sessoes)}
+        ${cartao('horas vendidas', `${mes.horas} h`)}
+        ${cartao('ticket médio', brl(mes.ticket))}
+        ${cartao('reservas com extra', `${mes.comExtra}%`)}
+      </div>
+
+      <h2 class="dash-titulo">Ocupação por sala &middot; ${mesNome}</h2>
+      ${
+        ocupacao.length
+          ? `<div class="dash-ocup-lista">${ocupacao.map(barraOcupacao).join('')}</div>`
+          : '<p class="vazio">Cadastre salas para acompanhar a ocupação.</p>'
+      }
+      <p class="campo-dica">Ocupação = horas reservadas ÷ horas de funcionamento da sala nos dias já corridos do mês.</p>
     </div>`
 }
 

@@ -549,6 +549,19 @@ export async function confirmarPagamento(id) {
   return updateReserva(id, { status: 'confirmada', pagoEm: Date.now() })
 }
 
+// ── Dashboard do dono ─────────────────────────────────────────
+// Todas as reservas do estúdio, de qualquer fotógrafo e qualquer
+// status. A RLS já garante que só o dono (ou admin) enxerga isto.
+export async function listarReservasDoEstudio() {
+  if (_modo !== 'banco' || !_estudioId) return []
+  const { data } = await supabase
+    .from('reservas')
+    .select('*')
+    .eq('estudio_id', _estudioId)
+    .order('data')
+  return (data || []).map(reservaDoBanco)
+}
+
 export async function remarcarReserva(id, { data, horaInicio, horaFim, valorSala, valorTotal }) {
   const atual = getReserva(id)
   const historico = atual.remarcacoes || []

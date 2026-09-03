@@ -36,10 +36,11 @@ import {
   novoId,
   listarPagamentosPendentes,
   confirmarPagamento,
+  listarReservasDoEstudio,
 } from './dados.js'
 import { gerarSlots, valorDoSlot, infoTemporada } from './agenda.js'
 import { podeRemarcar, calculoCancelamento, horasAteSessao } from './reserva.js'
-import { hojeISO, mmss, dataBR } from './format.js'
+import { hojeISO, mmss, dataBR, hhmmParaMin } from './format.js'
 import { telaInicio } from './telas/inicio.js'
 import { telaDetalhe } from './telas/detalhe.js'
 import { telaAgenda } from './telas/agenda.js'
@@ -69,6 +70,7 @@ import {
   telaDonoBloqueioForm,
   telaDonoIdentidade,
   telaDonoPagamentos,
+  telaDonoDashboard,
   salaEmBranco,
   extraEmBranco,
   bloqueioEmBranco,
@@ -225,6 +227,8 @@ function render() {
       return renderDonoIdentidade()
     case 'donoPagamentos':
       return renderDonoPagamentos()
+    case 'donoDashboard':
+      return renderDonoDashboard()
     case 'plataforma':
       return renderPlataforma()
     case 'escolherEstudio':
@@ -1000,6 +1004,81 @@ async function renderDonoPagamentos() {
       renderDonoPagamentos()
     }),
   )
+}
+
+// ---- Resumo do estúdio: dashboard do dono (Fase 6) ----
+const arredonda1 = (n) => Math.round(n * 10) / 10
+
+async function renderDonoDashboard() {
+  app.innerHTML = '<div class="reservar-corpo"><p class="vazio">Carregando resumo…</p></div>'
+  const reservas = await listarReservasDoEstudio()
+
+  const hoje = hojeISO()
+  const mesAtual = hoje.slice(0, 7) // "AAAA-MM"
+  const diasCorridos = Number(hoje.slice(8, 10)) // 1..31
+  const mesNome = new Date(hoje + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'long' })
+
+  const horasDe = (r) => Math.max(0, (hhmmParaMin(r.horaFim) - hhmmParaMin(r.horaInicio)) / 60)
+  const vendida = (r) => r.status === 'confirmada' || r.status === 'aguardando_pagamento'
+  const seguraHorario = (r) =>
+    vendida(r) || (r.status === 'travada' && r.travaExpiraEm > Date.now())
+
+  // ── Hoje ──
+  const deHoje = reservas
+    .filter((r) => r.data === hoje && seguraHorario(r))
+    .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))
+  const sessoesHoje = deHoje.filter(vendida)
+  const hojeResumo = {
+    sessoes: sessoesHoje.length,
+    horas: arredonda1(sessoesHoje.reduce((s, r) => s + horasDe(r), 0)),
+    faturamento: sessoesHoje
+      .filter((r) => r.status === 'confirmada')
+      .reduce((s, r) => s + r.valorTotal, 0),
+    aConfirmar: sessoesHoje.filter((r) => r.status === 'aguardando_pagamento').length,
+    lista: deHoje.map((r) => ({
+      hora: r.horaInicio,
+      salaNome: getSala(r.salaId)?.nome || 'Sala',
+      fotografo: r.fotografoNome,
+      status: r.status,
+    })),
+  }
+
+  // ── Este mês ──
+  const noMes = (r) => r.data.slice(0, 7) === mesAtual
+  const confMes = reservas.filter((r) => r.status === 'confirmada' && noMes(r))
+  const canceladasMes = reservas.filter((r) => r.status === 'cancelada' && noMes(r))
+  const fatMes = confMes.reduce((s, r) => s + r.valorTotal, 0)
+  const horasMes = confMes.reduce((s, r) => s + horasDe(r), 0)
+  const comExtra = confMes.filter((r) => (r.extras || []).length > 0).length
+  const mesResumo = {
+    faturamento: fatMes,
+    retido: canceladasMes.reduce((s, r) => s + (r.valorRetido || 0), 0),
+    sessoes: confMes.length,
+    horas: arredonda1(horasMes),
+    ticket: confMes.length ? Math.round(fatMes / confMes.length) : 0,
+    comExtra: confMes.length ? Math.round((comExtra / confMes.length) * 100) : 0,
+  }
+
+  // ── Ocupação por sala (mês corrente, até hoje) ──
+  const { abre, fecha } = config.horarioFuncionamento
+  const horasPorDia = Math.max(0, (hhmmParaMin(fecha) - hhmmParaMin(abre)) / 60)
+  const horasDisponiveis = arredonda1(horasPorDia * diasCorridos)
+  const ocupacao = getSalas().map((sala) => {
+    const vendidas = confMes
+      .filter((r) => r.salaId === sala.id)
+      .reduce((s, r) => s + horasDe(r), 0)
+    return {
+      salaNome: sala.nome,
+      horasVendidas: arredonda1(vendidas),
+      horasDisponiveis,
+      pct: horasDisponiveis ? Math.round((vendidas / horasDisponiveis) * 100) : 0,
+    }
+  })
+
+  app.innerHTML = telaDonoDashboard({
+    resumo: { mesNome, semDados: reservas.length === 0, hoje: hojeResumo, mes: mesResumo, ocupacao },
+  })
+  ligarNavegacao()
 }
 
 // ════════════════════════════════════════════════════════════════

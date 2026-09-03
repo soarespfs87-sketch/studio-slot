@@ -24,6 +24,9 @@ Para recomeçar os dados do zero: abra o Console do navegador (F12) e rode
 
 ## Painel do dono
 Link "Área do dono" no rodapé do início. De lá dá pra:
+- **Resumo do estúdio** — sessões e faturamento de hoje, lista das sessões do dia,
+  faturamento/sessões/horas/ticket médio do mês, % de reservas com extra e
+  barra de ocupação por sala (horas reservadas ÷ horas de funcionamento no mês)
 - **Salas** — criar/editar/excluir, ativar/desativar, definir fotos, tipo (fixa/sazonal),
   janela de temporada, buffer, duração do slot e **preço em 3 faixas** (dia útil / fim de semana / feriado)
 - **Extras** — criar/editar/excluir, valor e em quais salas aparece
@@ -40,5 +43,8 @@ Link "Área do dono" no rodapé do início. De lá dá pra:
       (sala sazonal só reserva entre `disponivelDe`/`disponivelAte`; buffer por sala
       bloqueia os horários colados numa reserva — aparecem como "preparo")
 - [x] Fase 5 — Painel do dono: salas, preços (3 faixas) e extras + identidade editável
-- [ ] Fase 6 — Painel do dono: dashboard
-- [ ] Fase Final — Publicar (Supabase + login + deploy + PWA)
+- [x] Fase 6 — Painel do dono: dashboard ("Resumo do estúdio")
+      reservas do dia, horas vendidas, faturamento do dia/mês, ticket médio,
+      % com extra e ocupação por sala no mês
+- [x] Fase Final — Publicar (Supabase + login + recuperação de senha + deploy Netlify + PWA)
+      pagamento por Pix confirmado manualmente pelo dono
