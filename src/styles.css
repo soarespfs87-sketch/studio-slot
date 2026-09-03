@@ -1420,6 +1420,9 @@ input[type='number'],
   flex-wrap: wrap;
   justify-content: center;
   gap: 6px 18px;
+  /* folga embaixo pra não ficar atrás de selinhos que a hospedagem injeta
+     no canto da tela (ex.: Netlify) */
+  margin-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
 }
 
 /* ── Campo de imagem (Escolher imagem + prévia) ── */
