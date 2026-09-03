@@ -1835,6 +1835,52 @@ input[type='number'],
   color: var(--cor-texto-suave);
 }
 
+/* ── Painel da plataforma: controle manual da mensalidade ── */
+.plat-linha {
+  margin-bottom: 0;
+}
+
+.plat-cobranca {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  margin: -2px 0 14px;
+  border: 1px solid var(--cor-borda);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  background: #faf8f6;
+}
+
+.plat-cobranca .campo:first-child {
+  grid-column: 1 / -1;
+}
+
+.plat-cobranca-acoes {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.plat-cobranca-acoes a.mini-btn {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.venc-ok {
+  color: #1c7c43;
+}
+.venc-amarelo {
+  color: #8a6a06;
+  font-weight: 600;
+}
+.venc-vermelho {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
 /* ── Páginas jurídicas (Privacidade / Termos) ── */
 .legal {
   max-width: 640px;

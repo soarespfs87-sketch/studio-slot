@@ -86,7 +86,7 @@ import {
   bloqueioEmBranco,
 } from './telas/dono.js'
 import { sair, souAdmin, meuEstudio } from './auth.js'
-import { telaPlataforma, carregarEstudios, definirPlano } from './telas/plataforma.js'
+import { telaPlataforma, carregarEstudios, definirPlano, salvarCobranca } from './telas/plataforma.js'
 import {
   carregarEstudio,
   getEstudioId,
@@ -1354,6 +1354,7 @@ async function renderPlataforma() {
     estudios,
     podeImportar,
     nomeDemo: podeImportar ? getConfig().nome : '',
+    hoje: hojeISO(),
   })
   ligarNavegacao()
 
@@ -1362,6 +1363,43 @@ async function renderPlataforma() {
       b.disabled = true
       await definirPlano(b.dataset.id, b.dataset.acao === 'liberar')
       renderPlataforma()
+    }),
+  )
+
+  app.querySelectorAll('form[data-cobranca]').forEach((f) =>
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const id = f.dataset.cobranca
+      const status = app.querySelector(`[data-cobranca-status="${id}"]`)
+      const btn = f.querySelector('button[type="submit"]')
+      btn.disabled = true
+      if (status) status.textContent = 'Salvando…'
+      const { error } = await salvarCobranca(id, {
+        plano_faixa: f.elements.plano_faixa.value,
+        cobranca_proxima: f.elements.cobranca_proxima.value,
+        lastlink_url: f.elements.lastlink_url.value.trim(),
+      })
+      if (error) {
+        if (status) status.textContent = 'Falhou: ' + (error.message || '')
+        btn.disabled = false
+        return
+      }
+      renderPlataforma()
+    }),
+  )
+
+  app.querySelectorAll('[data-acao="copiar-lastlink"]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const f = app.querySelector(`form[data-cobranca="${b.dataset.id}"]`)
+      const url = f?.elements.lastlink_url.value.trim()
+      const status = app.querySelector(`[data-cobranca-status="${b.dataset.id}"]`)
+      if (!url) return
+      try {
+        await navigator.clipboard.writeText(url)
+        if (status) status.textContent = 'Link copiado ✓'
+      } catch {
+        if (status) status.textContent = url
+      }
     }),
   )
 

@@ -70,7 +70,15 @@ Link "Área do dono" no rodapé do início. De lá dá pra:
       "Concluída" (calculado, não gravado no banco). "Minhas reservas" separa
       **Próximas** de **Anteriores**; a Agenda do dono marca "realizada".
 
+- [x] Monetização do SaaS — controle **manual** pelo LastLink. No Painel da
+      plataforma cada estúdio tem faixa do plano (R$197/297/497), data da
+      próxima cobrança (mostra "vence em X dias" / "vencido há Y") e o link
+      do LastLink. Cobrança recorrente é feita no LastLink; o admin liga/desliga
+      o `plano_ativo` na mão conforme o pagamento. Automação por webhook fica
+      pra quando tiver volume.
+
 ## Ainda pra fazer (backlog do MVP)
 - Notificações automáticas por e-mail (confirmação + lembrete 24h/2h) — adiado
-- Gateway de pagamento real (Pix + cartão) — hoje é Pix manual
+- Gateway de pagamento real da RESERVA (Pix + cartão) — hoje é Pix manual
+- Webhook do LastLink → liga/desliga `plano_ativo` sozinho (fase 2 da monetização)
 - Multi-idioma PT/EN e multi-moeda BRL/USD (lançamento comercial 2027)
