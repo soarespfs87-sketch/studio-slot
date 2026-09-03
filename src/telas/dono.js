@@ -164,6 +164,10 @@ export function telaDonoHome({ config, nSalas, nExtras, nBloqueios, nPagamentosP
           <span class="dono-item-nome">Resumo do estúdio</span>
           <span class="dono-item-sub">reservas do dia, horas vendidas, faturamento e ocupação</span>
         </button>
+        <button class="dono-item" data-ir="donoAgenda">
+          <span class="dono-item-nome">Agenda do estúdio</span>
+          <span class="dono-item-sub">calendário do mês — dias cheios, vagos e horários por sala</span>
+        </button>
         <button class="dono-item" data-ir="donoSalas">
           <span class="dono-item-nome">Salas e cenários</span>
           <span class="dono-item-sub">${nSalas} cadastrada(s) &middot; fotos, preços, temporada, intervalos</span>
@@ -297,6 +301,140 @@ export function telaDonoDashboard({ resumo }) {
           : '<p class="vazio">Cadastre salas para acompanhar a ocupação.</p>'
       }
       <p class="campo-dica">Ocupação = horas reservadas ÷ horas de funcionamento da sala no período (descontados feriados e dias que ainda não chegaram).</p>
+    </div>`
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Agenda do estúdio (Fase 6) — calendário do mês + horários do dia
+// ════════════════════════════════════════════════════════════════
+const DIAS_SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
+
+function celulaDia(c) {
+  if (!c) return '<div class="cal-dia cal-dia-vazio"></div>'
+  const classes = ['cal-dia', `cal-dia-${c.passado ? 'passado' : c.nivel}`]
+  if (c.ehHoje) classes.push('cal-dia-hoje')
+  // dia futuro/hoje: nº de horários livres (ou "cheio"); dia passado: nº de sessões
+  let tag = ''
+  if (c.passado) tag = c.ocupados ? `${c.ocupados} ✓` : ''
+  else if (c.nivel === 'cheio') tag = 'cheio'
+  else if (c.nivel === 'livre' || c.nivel === 'parcial') tag = `${c.livres} liv.`
+  return `
+    <button class="${classes.join(' ')}" data-agenda-dia="${c.iso}" aria-label="dia ${c.dia}">
+      <span class="cal-dia-num">${c.dia}</span>
+      <span class="cal-dia-tag">${tag}</span>
+    </button>`
+}
+
+export function telaDonoAgenda({ mesLabel, mesAnterior, mesSeguinte, dias, semDados }) {
+  return `
+    <div class="topo-nav">
+      <button class="link-voltar" data-ir="donoHome">&larr; Painel</button>
+    </div>
+
+    <div class="reservar-corpo">
+      <h1 class="titulo-grande">Agenda do estúdio</h1>
+
+      <div class="cal-nav">
+        <button type="button" class="mini-btn" data-agenda-mes="${mesAnterior}">&larr;</button>
+        <span class="cal-mes">${mesLabel}</span>
+        <button type="button" class="mini-btn" data-agenda-mes="${mesSeguinte}">&rarr;</button>
+      </div>
+
+      ${
+        semDados
+          ? '<p class="vazio">Nenhuma sala ativa. Ative uma sala em “Salas e cenários” para a agenda aparecer.</p>'
+          : `
+      <div class="cal-semana-cab">
+        ${DIAS_SEMANA.map((d) => `<span>${d}</span>`).join('')}
+      </div>
+      <div class="cal-grade">
+        ${dias.map(celulaDia).join('')}
+      </div>
+      <div class="cal-legenda">
+        <span><i class="cal-pt cal-pt-livre"></i> livre</span>
+        <span><i class="cal-pt cal-pt-parcial"></i> parcial</span>
+        <span><i class="cal-pt cal-pt-cheio"></i> cheio</span>
+      </div>
+      <p class="campo-dica">Toque num dia para ver os horários de cada sala.</p>`
+      }
+    </div>`
+}
+
+function slotAgendaDono(s) {
+  if (s.disponivel) {
+    return `
+      <div class="slot">
+        <span class="slot-hora">${s.inicio}</span>
+        <span class="slot-tag">livre</span>
+      </div>`
+  }
+  if (s.motivo === 'ocupado') {
+    const extra =
+      s.statusReserva === 'aguardando_pagamento'
+        ? '<span class="slot-mini">aguardando Pix</span>'
+        : s.statusReserva === 'travada'
+          ? '<span class="slot-mini">segurando</span>'
+          : ''
+    return `
+      <div class="slot slot-off slot-ocupado">
+        <span class="slot-hora">${s.inicio}</span>
+        <span class="slot-tag">${esc(s.fotografo || 'reservado')}</span>
+        ${extra}
+      </div>`
+  }
+  const texto =
+    s.motivo === 'passou'
+      ? 'passou'
+      : s.motivo === 'preparo'
+        ? 'preparo'
+        : s.motivo === 'bloqueado'
+          ? (s.nota || 'fechado').toLowerCase()
+          : 'ocupado'
+  return `
+    <div class="slot slot-off slot-${s.motivo}">
+      <span class="slot-hora">${s.inicio}</span>
+      <span class="slot-tag">${esc(texto)}</span>
+    </div>`
+}
+
+function blocoSalaDia(b) {
+  if (b.foraTemporada) {
+    return `
+      <div class="cal-sala">
+        <h2 class="dash-titulo">${esc(b.sala.nome)}</h2>
+        <p class="vazio">Cenário sazonal fora de temporada nesta data.</p>
+      </div>`
+  }
+  return `
+    <div class="cal-sala">
+      <h2 class="dash-titulo">${esc(b.sala.nome)}</h2>
+      <p class="agenda-info">${b.ocupados} de ${b.total} horários reservados</p>
+      <div class="grade-slots grade-slots-dono">
+        ${b.slots.map(slotAgendaDono).join('')}
+      </div>
+    </div>`
+}
+
+export function telaDonoAgendaDia({ dataISO, dataLabel, hojeISO, blocos }) {
+  const passou = dataISO < hojeISO
+  return `
+    <div class="topo-nav">
+      <button class="link-voltar" data-ir="donoAgenda">&larr; Agenda</button>
+    </div>
+
+    <div class="reservar-corpo">
+      <h1 class="titulo-grande">${dataLabel}</h1>
+      <label class="campo dono-campo">
+        <span>Ver outro dia</span>
+        <input type="date" id="agenda-dia-data" value="${dataISO}" />
+      </label>
+      ${passou ? '<p class="campo-dica">Dia já passado — visão do que aconteceu.</p>' : ''}
+
+      ${
+        blocos.length
+          ? blocos.map(blocoSalaDia).join('')
+          : '<p class="vazio">Nenhuma sala ativa nesta data.</p>'
+      }
     </div>`
 }
 

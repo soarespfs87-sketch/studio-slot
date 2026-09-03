@@ -37,6 +37,7 @@ import {
   listarPagamentosPendentes,
   confirmarPagamento,
   listarReservasDoEstudio,
+  reservaSeguraOHorario,
 } from './dados.js'
 import { gerarSlots, valorDoSlot, infoTemporada } from './agenda.js'
 import { podeRemarcar, calculoCancelamento, horasAteSessao } from './reserva.js'
@@ -71,6 +72,8 @@ import {
   telaDonoIdentidade,
   telaDonoPagamentos,
   telaDonoDashboard,
+  telaDonoAgenda,
+  telaDonoAgendaDia,
   salaEmBranco,
   extraEmBranco,
   bloqueioEmBranco,
@@ -117,12 +120,19 @@ let estado = {
   donoErro: null, // mensagem de erro do formulário atual
   donoConfirmar: false, // pedindo confirmação de exclusão
   dashPeriodo: 'mesAtual', // período do dashboard: mesAtual | mesPassado | 7dias
+  agendaMes: null, // mês aberto no calendário do dono ('AAAA-MM')
+  agendaDia: null, // dia aberto no detalhe da agenda do dono (ISO)
 }
 
 let intervaloContador = null
-// Cache das reservas do estúdio enquanto o dono navega pelo dashboard
-// (alternar o período não volta ao banco). render() limpa ao sair da tela.
-let _reservasDash = null
+// Cache das reservas do estúdio enquanto o dono navega pelo Resumo / Agenda
+// (trocar período ou dia não volta ao banco). render() limpa ao sair.
+let _reservasEstudio = null
+const TELAS_COM_RESERVAS_ESTUDIO = new Set(['donoDashboard', 'donoAgenda', 'donoAgendaDia'])
+async function reservasDoEstudio(recarregar = false) {
+  if (recarregar || !_reservasEstudio) _reservasEstudio = await listarReservasDoEstudio()
+  return _reservasEstudio
+}
 const app = document.querySelector('#app')
 
 function irPara(patch) {
@@ -181,8 +191,8 @@ function render() {
   config = getConfig() // sempre a versão mais recente
   aplicarTema(config)
 
-  // saiu do dashboard: joga fora o cache de reservas do resumo
-  if (estado.tela !== 'donoDashboard') _reservasDash = null
+  // saiu do Resumo/Agenda: joga fora o cache de reservas do estúdio
+  if (!TELAS_COM_RESERVAS_ESTUDIO.has(estado.tela)) _reservasEstudio = null
 
   switch (estado.tela) {
     case 'inicio':
@@ -236,6 +246,10 @@ function render() {
       return renderDonoPagamentos()
     case 'donoDashboard':
       return renderDonoDashboard()
+    case 'donoAgenda':
+      return renderDonoAgenda()
+    case 'donoAgendaDia':
+      return renderDonoAgendaDia()
     case 'plataforma':
       return renderPlataforma()
     case 'escolherEstudio':
@@ -1059,11 +1073,10 @@ function diasFuncionamento(de, ate, hojeISO, feriados) {
 }
 
 async function renderDonoDashboard() {
-  if (!_reservasDash) {
+  if (!_reservasEstudio) {
     app.innerHTML = '<div class="reservar-corpo"><p class="vazio">Carregando resumo…</p></div>'
-    _reservasDash = await listarReservasDoEstudio()
   }
-  const reservas = _reservasDash
+  const reservas = await reservasDoEstudio()
 
   const hoje = hojeISO()
   const chavePeriodo = estado.dashPeriodo || 'mesAtual'
@@ -1143,9 +1156,139 @@ async function renderDonoDashboard() {
   app.querySelectorAll('[data-dash-periodo]').forEach((b) =>
     b.addEventListener('click', () => irPara({ dashPeriodo: b.dataset.dashPeriodo })),
   )
-  app.querySelector('[data-acao="atualizar-resumo"]')?.addEventListener('click', () => {
-    _reservasDash = null
+  app.querySelector('[data-acao="atualizar-resumo"]')?.addEventListener('click', async () => {
+    await reservasDoEstudio(true)
     render()
+  })
+}
+
+// ---- Agenda do estúdio: calendário do mês ----
+function gradeDoMes(mesISO) {
+  const [y, m] = mesISO.split('-').map(Number)
+  const diaSemInicio = new Date(y, m - 1, 1).getDay() // 0 = domingo
+  const totalDias = new Date(y, m, 0).getDate()
+  const celulas = []
+  for (let i = 0; i < diaSemInicio; i++) celulas.push(null)
+  for (let d = 1; d <= totalDias; d++) celulas.push(`${mesISO}-${String(d).padStart(2, '0')}`)
+  while (celulas.length % 7 !== 0) celulas.push(null)
+  return celulas
+}
+
+const mesVizinho = (mesISO, passo) => {
+  const [y, m] = mesISO.split('-').map(Number)
+  const d = new Date(y, m - 1 + passo, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+// Contagem de horários livres / reservados de um dia, somando as salas ativas.
+function resumoDoDia(dataISO, salasAtivas, reservas, bloqueios) {
+  let livres = 0
+  let ocupados = 0
+  let total = 0
+  for (const sala of salasAtivas) {
+    for (const s of gerarSlots(sala, dataISO, reservas, bloqueios)) {
+      if (s.motivo === 'passou') continue
+      total++
+      if (s.disponivel) livres++
+      else if (s.motivo === 'ocupado') ocupados++
+    }
+  }
+  const nivel =
+    total === 0 ? 'fechado' : livres === 0 ? 'cheio' : ocupados === 0 ? 'livre' : 'parcial'
+  return { livres, ocupados, total, nivel }
+}
+
+async function renderDonoAgenda() {
+  if (!_reservasEstudio) {
+    app.innerHTML = '<div class="reservar-corpo"><p class="vazio">Carregando agenda…</p></div>'
+  }
+  const reservas = await reservasDoEstudio()
+  const hoje = hojeISO()
+  const mes = estado.agendaMes || hoje.slice(0, 7)
+  const salasAtivas = getSalas().filter((s) => s.ativa)
+  const bloqueios = getBloqueios()
+
+  const dias = gradeDoMes(mes).map((iso) => {
+    if (!iso) return null
+    return {
+      iso,
+      dia: Number(iso.slice(8, 10)),
+      passado: iso < hoje,
+      ehHoje: iso === hoje,
+      ...resumoDoDia(iso, salasAtivas, reservas, bloqueios),
+    }
+  })
+
+  const mesLabel = new Date(mes + '-01T12:00:00').toLocaleDateString('pt-BR', {
+    month: 'long',
+    year: 'numeric',
+  })
+
+  app.innerHTML = telaDonoAgenda({
+    mesLabel,
+    mesAnterior: mesVizinho(mes, -1),
+    mesSeguinte: mesVizinho(mes, 1),
+    dias,
+    semDados: salasAtivas.length === 0,
+  })
+  ligarNavegacao()
+
+  app.querySelectorAll('[data-agenda-mes]').forEach((b) =>
+    b.addEventListener('click', () => irPara({ agendaMes: b.dataset.agendaMes })),
+  )
+  app.querySelectorAll('[data-agenda-dia]').forEach((b) =>
+    b.addEventListener('click', () =>
+      irPara({ tela: 'donoAgendaDia', agendaDia: b.dataset.agendaDia }),
+    ),
+  )
+}
+
+// ---- Agenda do estúdio: horários de um dia, sala por sala ----
+async function renderDonoAgendaDia() {
+  if (!_reservasEstudio) {
+    app.innerHTML = '<div class="reservar-corpo"><p class="vazio">Carregando…</p></div>'
+  }
+  const reservas = await reservasDoEstudio()
+  const hoje = hojeISO()
+  const dataISO = estado.agendaDia || hoje
+  const bloqueios = getBloqueios()
+
+  const blocos = getSalas()
+    .filter((s) => s.ativa)
+    .map((sala) => {
+      const info = infoTemporada(sala, dataISO)
+      if (info && !info.dentro) return { sala, foraTemporada: true }
+      const slots = gerarSlots(sala, dataISO, reservas, bloqueios).map((s) => {
+        if (s.motivo !== 'ocupado') return s
+        const r = reservas.find(
+          (r) =>
+            r.salaId === sala.id &&
+            r.data === dataISO &&
+            r.horaInicio <= s.inicio &&
+            s.inicio < r.horaFim &&
+            reservaSeguraOHorario(r),
+        )
+        return { ...s, fotografo: r?.fotografoNome || '', statusReserva: r?.status || '' }
+      })
+      return {
+        sala,
+        slots,
+        ocupados: slots.filter((s) => s.motivo === 'ocupado').length,
+        total: slots.filter((s) => s.motivo !== 'passou').length,
+      }
+    })
+
+  const dataLabel = new Date(dataISO + 'T12:00:00').toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+  })
+
+  app.innerHTML = telaDonoAgendaDia({ dataISO, dataLabel, hojeISO: hoje, blocos })
+  ligarNavegacao()
+
+  app.querySelector('#agenda-dia-data')?.addEventListener('change', (e) => {
+    if (e.target.value) irPara({ agendaDia: e.target.value })
   })
 }
 

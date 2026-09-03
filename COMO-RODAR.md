@@ -29,6 +29,10 @@ Link "Área do dono" no rodapé do início. De lá dá pra:
   ocupação por sala. O bloco do período tem botões **Este mês / Mês passado /
   7 dias**; a ocupação desconta feriados e dias que ainda não chegaram. Botão
   **Atualizar** recarrega os números do banco.
+- **Agenda do estúdio** — calendário do mês inteiro: cada dia mostra se está
+  livre / parcial / cheio (e quantos horários sobram), navegação entre meses.
+  Toque num dia para ver os horários sala por sala — quem reservou, o status
+  (aguardando Pix / segurando), preparo (buffer) e bloqueios.
 - **Salas** — criar/editar/excluir, ativar/desativar, definir fotos, tipo (fixa/sazonal),
   janela de temporada, buffer, duração do slot e **preço em 3 faixas** (dia útil / fim de semana / feriado)
 - **Extras** — criar/editar/excluir, valor e em quais salas aparece
@@ -49,5 +53,7 @@ Link "Área do dono" no rodapé do início. De lá dá pra:
       reservas do dia, horas vendidas, faturamento do dia/período, ticket médio,
       % com extra e ocupação por sala; filtro Este mês / Mês passado / 7 dias
       (ocupação desconta feriados e dias futuros)
+      + "Agenda do estúdio": calendário do mês (livre/parcial/cheio) e os
+      horários de cada dia sala por sala, com quem reservou e o status
 - [x] Fase Final — Publicar (Supabase + login + recuperação de senha + deploy Netlify + PWA)
       pagamento por Pix confirmado manualmente pelo dono

@@ -1635,3 +1635,158 @@ input[type='number'],
   font-size: 0.74rem;
   color: var(--cor-texto-suave);
 }
+
+/* ── Agenda do estúdio (calendário do dono) ── */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0 12px;
+}
+
+.cal-mes {
+  font-family: var(--fonte-titulo);
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.cal-semana-cab,
+.cal-grade {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-semana-cab span {
+  text-align: center;
+  font-size: 0.68rem;
+  color: var(--cor-texto-suave);
+  padding-bottom: 4px;
+}
+
+.cal-dia {
+  appearance: none;
+  font-family: var(--fonte-texto);
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2px;
+  padding: 5px 6px;
+  border: 1px solid var(--cor-borda);
+  border-left-width: 3px;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.cal-dia:active {
+  background: #faf6f2;
+}
+
+.cal-dia-num {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.cal-dia-tag {
+  font-size: 0.6rem;
+  color: var(--cor-texto-suave);
+  line-height: 1.1;
+}
+
+.cal-dia-vazio {
+  border: none;
+  background: transparent;
+  cursor: default;
+  pointer-events: none;
+  min-height: 0;
+}
+
+.cal-dia-passado {
+  opacity: 0.45;
+  border-left-color: var(--cor-borda);
+}
+
+.cal-dia-livre {
+  border-left-color: #1c7c43;
+}
+
+.cal-dia-parcial {
+  border-left-color: #b8860b;
+}
+
+.cal-dia-cheio {
+  border-left-color: #b91c1c;
+  background: #fbf2f1;
+}
+
+.cal-dia-fechado {
+  border-left-color: var(--cor-borda);
+}
+
+.cal-dia-hoje {
+  box-shadow: inset 0 0 0 2px var(--cor-primaria);
+  border-color: var(--cor-primaria);
+}
+
+.cal-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 12px;
+  font-size: 0.74rem;
+  color: var(--cor-texto-suave);
+}
+
+.cal-pt {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.cal-pt-livre {
+  background: #1c7c43;
+}
+.cal-pt-parcial {
+  background: #b8860b;
+}
+.cal-pt-cheio {
+  background: #b91c1c;
+}
+
+/* Grade de horários do dia, na visão do dono (não é clicável) */
+.cal-sala {
+  margin-top: 8px;
+}
+
+.grade-slots-dono {
+  padding: 8px 0 4px;
+  gap: 8px;
+}
+
+.slot-ocupado {
+  background: #fbf4ef;
+  border-color: #eBD9c9;
+}
+
+.slot-ocupado .slot-tag {
+  color: var(--cor-primaria);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.slot-mini {
+  font-size: 0.62rem;
+  color: var(--cor-texto-suave);
+}
