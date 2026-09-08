@@ -13,6 +13,13 @@
 
 cd "$(dirname "$0")" || exit 1
 
+# 0. Backup do banco de dados (Supabase), se já estiver configurado.
+#    Se não estiver, avisa e segue só com o código — não trava o backup.
+if [ -x ./backup-supabase.sh ]; then
+  ./backup-supabase.sh || echo "  → seguindo só com o código por enquanto."
+  echo
+fi
+
 # 1. Tem alguma mudança pra salvar?
 if [ -z "$(git status --porcelain)" ]; then
   echo "✓ Nada mudou desde o último backup."

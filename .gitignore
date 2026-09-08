@@ -1,3 +1,8 @@
 node_modules
 dist
 .DS_Store
+
+# Cópias do banco de dados: só a versão criptografada (.sql.enc) entra no Git.
+# Qualquer .sql "cru" (com dados pessoais em texto puro) fica fora.
+backups/**/*.sql
+backups/**/*.dump
