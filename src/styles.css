@@ -4096,3 +4096,204 @@ input[type='number'],
 .fam-form .campo {
   margin-top: 8px;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   v2 — Contratos
+   ════════════════════════════════════════════════════════════════ */
+.st-contrato {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.st-rascunho {
+  background: color-mix(in srgb, var(--cor-borda) 70%, transparent);
+  color: var(--cor-texto-suave);
+}
+
+.st-enviado {
+  background: var(--sinal-amarelo-fundo);
+  color: var(--sinal-amarelo);
+}
+
+.st-assinado {
+  background: var(--sinal-verde-fundo);
+  color: var(--sinal-verde);
+}
+
+.lanc-link .st-contrato {
+  justify-self: end;
+}
+
+.texto-contrato {
+  font-family: var(--fonte-texto);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  min-height: 320px;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .gerar-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .gerar-grid .doc-previa {
+    position: sticky;
+    top: 24px;
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    margin-top: 18px;
+  }
+}
+
+.contrato-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 6px;
+}
+
+.contrato-acoes .botao {
+  padding: 11px 18px;
+}
+
+/* O documento (tela) */
+.doc-previa {
+  margin-top: 16px;
+}
+
+.contrato-doc {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 44px 48px;
+  background: #fff;
+  color: #111;
+  border: 1px solid var(--cor-borda);
+  border-radius: 4px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .contrato-doc {
+    padding: 24px 18px;
+    font-size: 0.88rem;
+  }
+}
+
+.doc-cabeca {
+  margin-bottom: 22px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #111;
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.contrato-doc p {
+  margin: 0 0 12px;
+}
+
+.doc-titulo {
+  margin: 18px 0 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.contrato-doc .doc-titulo:first-of-type {
+  margin-top: 0;
+}
+
+.doc-falta {
+  background: var(--sinal-amarelo-fundo);
+  color: var(--sinal-amarelo);
+  border-radius: 3px;
+}
+
+/* O documento (PDF): só o contrato, em A4, com páginas numeradas */
+@page {
+  size: A4;
+  margin: 2cm 2cm 2.2cm;
+  @bottom-center {
+    content: 'Página ' counter(page) ' de ' counter(pages);
+    font-family: Georgia, serif;
+    font-size: 9pt;
+    color: #555;
+  }
+}
+
+@media print {
+  html:has(body.imprimindo-contrato),
+  body.imprimindo-contrato {
+    min-height: 0;
+    height: auto;
+    background: #fff;
+  }
+  body.imprimindo-contrato #app {
+    display: block;
+    max-width: none;
+    min-height: 0;
+    background: #fff;
+  }
+  body.imprimindo-contrato #app > *:not(.casca-conteudo),
+  body.imprimindo-contrato .casca-conteudo .modulo > *:not(.doc-final) {
+    display: none !important;
+  }
+  body.imprimindo-contrato .casca-conteudo,
+  body.imprimindo-contrato .casca-conteudo .modulo,
+  body.imprimindo-contrato .doc-previa {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  body.imprimindo-contrato .contrato-doc {
+    max-width: none;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    font-size: 11pt;
+  }
+  body.imprimindo-contrato .doc-titulo,
+  body.imprimindo-contrato .doc-cabeca {
+    break-after: avoid;
+  }
+  body.imprimindo-contrato .contrato-doc p {
+    orphans: 3;
+    widows: 3;
+  }
+}
+
+.passo-a-passo {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--cor-primaria) 6%, transparent);
+  font-size: 0.88rem;
+}
+
+.passo-a-passo ol {
+  margin: 6px 0 0 18px;
+}
+
+.passo-a-passo li + li {
+  margin-top: 4px;
+}
+
+.passo-a-passo a {
+  color: var(--cor-primaria);
+  font-weight: 600;
+}
+
+.ficha-acoes a.botao {
+  text-decoration: none;
+  padding: 11px 18px;
+}

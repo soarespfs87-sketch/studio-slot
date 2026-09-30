@@ -91,7 +91,11 @@ function blocoFollowup(l, hoje, modo) {
 function acoesEtapa(l) {
   const prox = proximaEtapa(l.etapa)
   if (l.etapa === 'fechado' || l.etapa === 'perdido') {
-    return `<div class="ficha-acoes"><button type="button" class="mini-btn" data-acao="reabrir">Reabrir (voltar pra Negociação)</button></div>`
+    return `<div class="ficha-acoes">${
+      l.etapa === 'fechado' && l.cliente_id
+        ? `<a class="botao" href="#/clientes/${l.cliente_id}/contrato/novo">Gerar contrato</a>`
+        : ''
+    }<button type="button" class="mini-btn" data-acao="reabrir">Reabrir (voltar pra Negociação)</button></div>`
   }
   return `
     <div class="ficha-acoes">

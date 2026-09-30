@@ -14,6 +14,8 @@ import {
 import { getNegocio, salvarIdentidade } from '../../negocio.js'
 import { aplicarTema } from '../../theme.js'
 import { sair } from '../../auth.js'
+import { carregarPrecos, salvarConfig } from '../precos/dados.js'
+import { cpfValido, cnpjValido, formatarDocumento } from '../clientes/regras.js'
 
 function tela({ negocio, ehAdmin, email, erro, salvo }) {
   const t = negocio.tema
@@ -44,6 +46,20 @@ function tela({ negocio, ehAdmin, email, erro, salvo }) {
         <button type="submit" class="botao botao-grande">Salvar</button>
       </form>
 
+      <form class="dono-form" id="form-contrato" novalidate>
+        <h2 class="bloco-titulo">Dados pro contrato</h2>
+        <p class="campo-dica">Aparecem nos contratos no lugar das etiquetas {contratada_nome}, {contratada_documento}, {contratada_endereco} e {foro_cidade}.</p>
+        <div id="contrato-campos"><p class="vazio-mini">Carregando…</p></div>
+      </form>
+      <div class="passo-a-passo">
+        <strong>Como gerar um contrato</strong>
+        <ol>
+          <li>Preencha e salve os dados acima.</li>
+          <li>Crie seu modelo em <a href="#/clientes/modelos">Clientes › Modelos de contrato</a> (tem um exemplo pronto pra começar).</li>
+          <li>Abra uma <a href="#/clientes">cliente</a> e clique em <em>+ Gerar contrato</em>. Quem fecha um lead vira cliente sozinha.</li>
+        </ol>
+      </div>
+
       <h2 class="bloco-titulo">Conta</h2>
       <div class="ajustes-lista">
         ${email ? `<p class="ajustes-linha"><span>E-mail</span><strong>${esc(email)}</strong></p>` : ''}
@@ -63,10 +79,51 @@ const temaDoForm = (el) => ({
   textoSuave: el.querySelector('#f-cor-texto').value,
 })
 
+async function ligarDadosContrato(el) {
+  const caixa = el.querySelector('#contrato-campos')
+  const { dados, error } = await carregarPrecos(getNegocio().id)
+  if (!caixa.isConnected) return
+  if (error) {
+    caixa.innerHTML = '<p class="form-erro">Não consegui carregar. Recarregue a página.</p>'
+    return
+  }
+  const c = dados.config
+  caixa.innerHTML = `
+    ${campoTexto('k-nome', 'Seu nome ou razão social', c.contratada_nome || '')}
+    ${campoTexto('k-doc', 'CPF ou CNPJ', formatarDocumento(c.contratada_documento || ''))}
+    ${campoTexto('k-end', 'Endereço completo', c.contratada_endereco || '')}
+    ${campoTexto('k-foro', 'Cidade do foro', c.foro_cidade || '', { placeholder: 'Ex.: São Paulo/SP' })}
+    <p class="form-erro" id="k-erro" hidden></p>
+    <div class="linha-acao"><button type="submit" class="botao">Salvar dados pro contrato</button><span class="status-salvo" id="k-status"></span></div>`
+  const form = el.querySelector('#form-contrato')
+  form.onsubmit = async (e) => {
+    e.preventDefault()
+    const doc = form.querySelector('#k-doc').value.replace(/\D/g, '')
+    const erro = form.querySelector('#k-erro')
+    if (doc && !(doc.length === 11 ? cpfValido(doc) : doc.length === 14 ? cnpjValido(doc) : false)) {
+      erro.textContent = 'Confira o CPF (11 números) ou CNPJ (14 números).'
+      erro.hidden = false
+      return
+    }
+    erro.hidden = true
+    const { error: e2 } = await salvarConfig({
+      contratada_nome: form.querySelector('#k-nome').value.trim() || null,
+      contratada_documento: doc || null,
+      contratada_endereco: form.querySelector('#k-end').value.trim() || null,
+      foro_cidade: form.querySelector('#k-foro').value.trim() || null,
+    })
+    const st = form.querySelector('#k-status')
+    st.textContent = e2 ? 'Não deu pra salvar: ' + (e2.message || '') : 'Salvo ✓'
+    st.dataset.tipo = e2 ? 'erro' : 'ok'
+    if (!e2) form.querySelector('#k-doc').value = formatarDocumento(doc)
+  }
+}
+
 export function render(el, ctx, estadoTela = {}) {
   const negocio = getNegocio()
   el.innerHTML = tela({ negocio, ehAdmin: ctx.ehAdmin, email: ctx.email, ...estadoTela })
 
+  ligarDadosContrato(el)
   ligarCampoFoto(el, 'f-logo', negocio.id, 'marca')
   ligarCampoFoto(el, 'f-icone', negocio.id, 'marca')
 

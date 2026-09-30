@@ -11,9 +11,13 @@ import { hojeISO } from '../../format.js'
 import { carregarClientes, acharCliente, marcarLembreteFeito, mensagemDeErro } from './dados.js'
 import { carregarLeads } from '../leads/dados.js'
 import { carregarPrecos, salvarConfig } from '../precos/dados.js'
-import { calcularLembretes, aniversarioNoAno } from './regras.js'
+import { calcularLembretes, aniversarioNoAno, formatarCpf, formatarDocumento } from './regras.js'
 import { itemLembrete, dataBR } from './ui.js'
-import { renderFicha } from './ficha.js'
+import { renderFicha, enderecoTexto } from './ficha.js'
+import { carregarContratos } from '../contratos/dados.js'
+import { renderModelos, renderEditorModelo, renderGerar, renderContrato } from '../contratos/telas.js'
+import { montarValores } from '../contratos/regras.js'
+import { carregarLancamentos } from '../financeiro/dados.js'
 import { renderFormulario } from './formulario.js'
 import { formatarWhatsApp } from '../leads/regras.js'
 
@@ -39,6 +43,7 @@ function abas(atual, nLembretes) {
     <nav class="abas" aria-label="Clientes">
       <a class="aba ${atual === 'lista' ? 'aba-ativa' : ''}" href="#/clientes">Clientes</a>
       <a class="aba ${atual === 'lembretes' ? 'aba-ativa' : ''}" href="#/clientes/lembretes">Lembretes${nLembretes ? ` <span class="aba-num">${nLembretes}</span>` : ''}</a>
+      <a class="aba ${atual === 'modelos' ? 'aba-ativa' : ''}" href="#/clientes/modelos">Modelos de contrato</a>
     </nav>`
 }
 
@@ -97,7 +102,8 @@ function renderLista(el, { clientes, nLembretes }) {
             </div>`
           : `<div class="em-breve">
               <p class="em-breve-frase">Quem fecha com você vira cliente aqui — sozinha.</p>
-              <p class="modulo-intro">Feche um lead no funil, ou cadastre quem comprou antes de você usar o app.</p>
+              <p class="modulo-intro">Feche um lead no funil, ou cadastre quem comprou antes de você usar o app. É na ficha da cliente que você gera o contrato.</p>
+              <a class="botao" href="#/clientes/nova" style="display:inline-block;margin-top:14px;text-decoration:none">+ Cadastrar cliente</a>
             </div>`
       }
     </section>`
@@ -205,17 +211,18 @@ function renderLembretes(el, { lembretes, clientes, config, recarregar }) {
 }
 
 export async function render(el, ctx, aviso) {
-  const [, a, b] = location.hash.replace(/^#\/?/, '').split('/')
+  const [, a, b, c] = location.hash.replace(/^#\/?/, '').split('/')
   if (!el.querySelector('.modulo')) {
     el.innerHTML = '<section class="modulo"><h1 class="titulo-grande">Clientes</h1><p class="vazio">Carregando…</p></section>'
   }
-  const [rc, rl, rp] = await Promise.all([
+  const [rc, rl, rp, rk] = await Promise.all([
     carregarClientes(ctx.negocio.id),
     carregarLeads(ctx.negocio.id, { recarregar: true }),
     carregarPrecos(ctx.negocio.id),
+    carregarContratos(ctx.negocio.id),
   ])
   if (location.hash.replace(/^#\/?/, '').split('/')[0] !== 'clientes') return
-  const error = rc.error || rl.error || rp.error
+  const error = rc.error || rl.error || rp.error || rk.error
   if (error) {
     el.innerHTML = `
       <section class="modulo"><h1 class="titulo-grande">Clientes</h1>
@@ -237,6 +244,15 @@ export async function render(el, ctx, aviso) {
   const recarregar = (msg) => render(el, ctx, msg)
 
   if (a === 'lembretes') return renderLembretes(el, { lembretes, clientes, config, recarregar })
+  if (a === 'modelos') {
+    if (!b) return renderModelos(el, { modelos: rk.dados.modelos, abas: abas('modelos', lembretes.length), recarregar })
+    const modelo = b === 'novo' ? null : rk.dados.modelos.find((m) => m.id === b)
+    if (b !== 'novo' && !modelo) {
+      el.innerHTML = '<section class="modulo"><p class="vazio-mini">Não encontrei esse modelo. <a href="#/clientes/modelos">Voltar</a></p></section>'
+      return
+    }
+    return renderEditorModelo(el, { modelo })
+  }
   if (a === 'nova') return renderFormulario(el, { cliente: null })
   if (!a) return renderLista(el, { clientes, nLembretes: lembretes.length })
 
@@ -246,10 +262,36 @@ export async function render(el, ctx, aviso) {
     return
   }
   if (b === 'editar') return renderFormulario(el, { cliente })
+  const contratosDela = rk.dados.contratos.filter((k) => k.cliente_id === cliente.id)
+  if (b === 'contrato' && c === 'novo') {
+    const { lancamentos } = await carregarLancamentos(ctx.negocio.id)
+    const valoresDe = (compra) =>
+      montarValores({
+        cliente: { ...cliente, whatsappFormatado: formatarWhatsApp(cliente.whatsapp) },
+        compra,
+        servico: compra ? rp.dados.servicos.find((s) => s.id === compra.servico_id) : null,
+        entradas: compra ? (lancamentos || []).filter((l) => l.lead_id === compra.id) : [],
+        config,
+        hoje: hojeISO(),
+        formatarCpf,
+        formatarDocumento,
+        endereco: enderecoTexto,
+      })
+    return renderGerar(el, { cliente, compras: cliente.compras || [], modelos: rk.dados.modelos, negocio: ctx.negocio, valoresDe })
+  }
+  if (b === 'contrato' && c) {
+    const contrato = contratosDela.find((k) => k.id === c)
+    if (!contrato) {
+      el.innerHTML = `<section class="modulo"><p class="vazio-mini">Não encontrei esse contrato. <a href="#/clientes/${cliente.id}">Voltar</a></p></section>`
+      return
+    }
+    return renderContrato(el, { contrato, cliente, negocio: ctx.negocio })
+  }
   renderFicha(el, {
     cliente,
     compras: cliente.compras || [],
     lembretes: lembretes.filter((l) => l.clienteId === cliente.id),
+    contratos: contratosDela,
     negocio: ctx.negocio,
     recarregar,
   })

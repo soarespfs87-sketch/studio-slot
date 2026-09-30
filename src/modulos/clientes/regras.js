@@ -200,3 +200,24 @@ export function calcularLembretes({ clientes, config, hoje, feitos = new Set(), 
   }
   return lista.sort((a, b) => a.data.localeCompare(b.data) || a.titulo.localeCompare(b.titulo))
 }
+
+// CNPJ (14 dígitos) com os dígitos verificadores
+export function cnpjValido(texto) {
+  const c = String(texto ?? '').replace(/\D/g, '')
+  if (c.length !== 14 || /^(\d)\1{13}$/.test(c)) return false
+  const dig = (n) => {
+    const pesos = n === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    const s = pesos.reduce((t, p, i) => t + p * Number(c[i]), 0)
+    const r = s % 11
+    return r < 2 ? 0 : 11 - r
+  }
+  return dig(12) === Number(c[12]) && dig(13) === Number(c[13])
+}
+
+// CPF ou CNPJ formatado conforme o tamanho
+export function formatarDocumento(d) {
+  if (!d) return ''
+  if (d.length === 11) return formatarCpf(d)
+  if (d.length === 14) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`
+  return d
+}

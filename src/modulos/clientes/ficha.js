@@ -11,8 +11,9 @@ import { iconeWhats } from '../leads/ui.js'
 import { salvarFamiliar, apagarFamiliar, apagarCliente, marcarLembreteFeito, mensagemDeErro } from './dados.js'
 import { PARENTESCOS, rotuloParentesco, idadeEm, textoIdade, formatarCpf, formatarCep } from './regras.js'
 import { itemLembrete, dataBR } from './ui.js'
+import { pilulaStatus } from '../contratos/telas.js'
 
-function enderecoTexto(c) {
+export function enderecoTexto(c) {
   const linha1 = [c.rua, c.numero].filter(Boolean).join(', ')
   const partes = [linha1 + (c.complemento ? ` — ${c.complemento}` : ''), c.bairro, [c.cidade, c.uf].filter(Boolean).join('/'), c.cep ? `CEP ${formatarCep(c.cep)}` : '']
   return partes.filter((p) => p && p.trim()).join(' · ')
@@ -83,7 +84,7 @@ function formFamiliar(f = null) {
     </li>`
 }
 
-export function renderFicha(el, { cliente, compras, lembretes, negocio, recarregar }) {
+export function renderFicha(el, { cliente, compras, lembretes, contratos = [], negocio, recarregar }) {
   const c = cliente
   const hoje = hojeISO()
   const estado = { editandoFam: null, nascendo: null, novoFam: false }
@@ -163,6 +164,21 @@ export function renderFicha(el, { cliente, compras, lembretes, negocio, recarreg
                       .join('')}</ul>
                     <div class="rl rl-forte" style="margin-top:6px"><dt>Total</dt><dd>${formatarReais(total)}</dd></div>`
                   : '<p class="vazio-mini">Nenhuma compra ligada ainda.</p>'
+              }
+            </div>
+            <div class="cartao-bloco">
+              <div class="bloco-cabeca"><h2 class="bloco-titulo">Contratos</h2><a class="mini-btn mini-btn-primario" href="#/clientes/${c.id}/contrato/novo">+ Gerar contrato</a></div>
+              ${
+                contratos.length
+                  ? `<ul class="lanc-lista">${contratos
+                      .map(
+                        (k) => `<li class="lanc"><a class="lanc-link" href="#/clientes/${c.id}/contrato/${k.id}">
+                          <span class="lanc-data">${dataBR(k.created_at.slice(0, 10)).slice(0, 5)}</span>
+                          <span class="lanc-desc"><strong>${esc(k.titulo)}</strong></span>
+                          ${pilulaStatus(k.status)}</a></li>`,
+                      )
+                      .join('')}</ul>`
+                  : '<p class="vazio-mini">Nenhum contrato ainda.</p>'
               }
             </div>
             <button type="button" class="link-arquivar" data-acao="apagar">Apagar cliente</button>
@@ -276,7 +292,7 @@ export function renderFicha(el, { cliente, compras, lembretes, negocio, recarreg
     )
 
     el.querySelector('[data-acao="apagar"]').addEventListener('click', async () => {
-      if (!confirm(`Apagar a ficha de "${c.nome}"? A família e os lembretes vão junto. As compras continuam nos Leads e no Financeiro.`)) return
+      if (!confirm(`Apagar a ficha de "${c.nome}"? A família, os lembretes e os contratos dela (inclusive assinados) vão junto. As compras continuam nos Leads e no Financeiro.`)) return
       const { error } = await apagarCliente(c.id)
       if (error) return status(mensagemDeErro(error))
       location.hash = '#/clientes'
