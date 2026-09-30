@@ -27,7 +27,7 @@ prompts de cada fase em `PROMPTS.md`.
       - [x] Segurança do banco revisada (banco/final-seguranca.sql)
       - [x] Privacidade e Termos da v2 (fotógrafo controlador, Studio Slot operador, dados de crianças)
       - [x] Tela de assinatura (Pro R$ 59/mês ou R$ 590/ano). Links do LastLink: `src/ui.js` › `PLANO` (vazios = mostra o e-mail)
-      - [ ] Publicar (git push → Netlify)
+      - [x] Publicar (git push → Netlify) — v2 enviada em 30/09/2026
       - [ ] Antes de liberar o teste: contratar Supabase Pro e ligar "Leaked password protection"
         (Supabase › Authentication › Providers › Email)
 
