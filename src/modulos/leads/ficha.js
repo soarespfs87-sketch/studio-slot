@@ -184,6 +184,7 @@ function dadosLead(l, servicos) {
         ${linha('Valor estimado', l.valor_estimado_centavos != null ? formatarReais(l.valor_estimado_centavos) : '')}
         ${l.etapa === 'fechado' ? linha('Valor fechado', `<strong>${formatarReais(l.valor_fechado_centavos)}</strong>`) : ''}
         ${l.etapa === 'fechado' ? linha('Sessão', dataComDia(l.data_sessao)) : ''}
+        ${l.cliente_id ? linha('Cliente', `<a href="#/clientes/${l.cliente_id}">ver ficha / completar cadastro →</a>`) : ''}
         ${l.etapa === 'fechado' ? linha('Pagamento', `<a href="#/financeiro">ver no Financeiro →</a>`) : ''}
         ${l.etapa === 'perdido' ? linha('Motivo da perda', esc(rotuloMotivo(l.motivo_perda))) : ''}
       </dl>

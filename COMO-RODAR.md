@@ -20,13 +20,15 @@ prompts de cada fase em `PROMPTS.md`.
 - [x] Fase 1 — Preços: base do negócio, pacotes, campanhas temáticas, calculadora rápida
 - [x] Fase 2 — Leads: funil, ficha, follow-up, WhatsApp, fechar/perder/reabrir, histórico
 - [x] Fase 3 — Financeiro: fluxo de caixa da planilha, fechar lead com sinal + saldo, tarifa de cartão automática, custos fixos do mês, regra PF/PJ
-- [ ] Fase 4 — Clientes + lembretes · [ ] Fase 5 — Contratos · [ ] Fase 6 — Início · [ ] Final — Publicar
+- [x] Fase 4 — Clientes + lembretes: cliente criada ao fechar (sem duplicar), ficha com família e compras, lembretes com WhatsApp
+- [ ] Fase 5 — Contratos · [ ] Fase 6 — Início · [ ] Final — Publicar
 
 ## Onde está cada coisa (v2)
 - `src/portao.js` — decide o que mostrar: login → "nome do seu negócio" → "falta liberar a assinatura" → app
 - `src/app.js` — o menu e a troca de telas (endereço `#/leads`, `#/precos`…)
 - `src/modulos/<parte>/index.js` — cada parte do app (`inicio`, `leads`, `precos`, `financeiro`, `ajustes`, `plataforma`)
 - `src/negocio.js` — nome, marca e cores do negócio (tabela `estudios`)
+- `src/modulos/clientes/` — `index.js` (lista + aba Lembretes), `ficha.js`, `formulario.js`, `regras.js` (lembretes, CPF — com testes)
 - `src/modulos/financeiro/` — `mes.js` (cascata do mês), `formulario.js` (entrada/saída, regra PF/PJ), `dados.js` (banco)
 - `src/modulos/leads/` — `funil.js`, `ficha.js`, `formulario.js`, `regras.js` (com testes), `dados.js` (banco)
 - `src/modulos/precos/` — `base.js`, `servicos.js` (pacotes e campanhas), `calculadora.js`, `dados.js` (banco)
