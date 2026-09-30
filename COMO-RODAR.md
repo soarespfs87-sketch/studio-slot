@@ -24,6 +24,18 @@ prompts de cada fase em `PROMPTS.md`.
 - [x] Fase 5 — Contratos: modelos com etiquetas, prévia com o que falta, PDF, WhatsApp, assinado trava
 - [x] Fase 6 — Início: pra fazer (follow-ups + lembretes), ações de venda, campanhas, o mês, funil e conversão, preços abaixo do mínimo, primeiros passos
 - [ ] Final — Publicar
+      - [x] Segurança do banco revisada (banco/final-seguranca.sql)
+      - [x] Privacidade e Termos da v2 (fotógrafo controlador, Studio Slot operador, dados de crianças)
+      - [x] Tela de assinatura (Pro R$ 59/mês ou R$ 590/ano). Links do LastLink: `src/ui.js` › `PLANO` (vazios = mostra o e-mail)
+      - [ ] Publicar (git push → Netlify)
+      - [ ] Antes de liberar o teste: contratar Supabase Pro e ligar "Leaked password protection"
+        (Supabase › Authentication › Providers › Email)
+
+## Como liberar um fotógrafo do teste
+1. A pessoa cria a conta em studioslot.app.br (vê "Falta só a assinatura").
+2. Você entra, vai em Ajustes › Painel da plataforma.
+3. Marca a faixa **Cortesia (teste)** (ou Pro mensal/anual) e clica **Liberar plano**.
+4. A pessoa clica "Já assinei — recarregar" e entra no app.
 
 ## Onde está cada coisa (v2)
 - `src/portao.js` — decide o que mostrar: login → "nome do seu negócio" → "falta liberar a assinatura" → app

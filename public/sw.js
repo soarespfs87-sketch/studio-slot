@@ -4,7 +4,7 @@
 //  Ao publicar uma versão nova, troque o número do cache (v1 -> v2).
 // ────────────────────────────────────────────────────────────────
 
-const CACHE = 'studioslot-v2'
+const CACHE = 'studioslot-v3'
 const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/favicon.png', '/studio-slot-logo.png']
 
 self.addEventListener('install', (e) => {
