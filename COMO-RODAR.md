@@ -22,13 +22,15 @@ prompts de cada fase em `PROMPTS.md`.
 - [x] Fase 3 — Financeiro: fluxo de caixa da planilha, fechar lead com sinal + saldo, tarifa de cartão automática, custos fixos do mês, regra PF/PJ
 - [x] Fase 4 — Clientes + lembretes: cliente criada ao fechar (sem duplicar), ficha com família e compras, lembretes com WhatsApp
 - [x] Fase 5 — Contratos: modelos com etiquetas, prévia com o que falta, PDF, WhatsApp, assinado trava
-- [ ] Fase 6 — Início · [ ] Final — Publicar
+- [x] Fase 6 — Início: pra fazer (follow-ups + lembretes), ações de venda, campanhas, o mês, funil e conversão, preços abaixo do mínimo, primeiros passos
+- [ ] Final — Publicar
 
 ## Onde está cada coisa (v2)
 - `src/portao.js` — decide o que mostrar: login → "nome do seu negócio" → "falta liberar a assinatura" → app
 - `src/app.js` — o menu e a troca de telas (endereço `#/leads`, `#/precos`…)
 - `src/modulos/<parte>/index.js` — cada parte do app (`inicio`, `leads`, `precos`, `financeiro`, `ajustes`, `plataforma`)
 - `src/negocio.js` — nome, marca e cores do negócio (tabela `estudios`)
+- `src/modulos/inicio/` — o painel do dia (`regras.js`: métricas do CRM, checklist, campanhas — com testes)
 - `src/modulos/contratos/` — `telas.js` (modelos, gerar, ver), `documento.js` (documento e PDF), `regras.js` (valor/data por extenso, etiquetas — com testes)
 - `src/modulos/clientes/` — `index.js` (lista + aba Lembretes), `ficha.js`, `formulario.js`, `regras.js` (lembretes, CPF — com testes)
 - `src/modulos/financeiro/` — `mes.js` (cascata do mês), `formulario.js` (entrada/saída, regra PF/PJ), `dados.js` (banco)
