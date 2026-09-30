@@ -1,5 +1,7 @@
 // Telas jurídicas: Política de Privacidade e Termos de Uso.
 // Textos em PT-BR (a versão em inglês entra no lançamento comercial de 2027).
+// v2 (30/09/2026): app de gestão pro fotógrafo — o fotógrafo é controlador
+// dos dados dos clientes dele; o Studio Slot é operador desses dados.
 // `standalone` = aberta fora do app (ex.: link da tela de login, aba nova):
 // os links viram âncoras de hash e o "voltar" recarrega o app na raiz.
 // Dentro do app, tudo passa pelo router (data-ir).
@@ -8,7 +10,7 @@
 // TODO: trocar por um e-mail dedicado (ex.: contato@studioslot.app) quando houver domínio.
 export const CONTATO_PRIVACIDADE = 'soarespfs87@gmail.com'
 
-const ATUALIZADO_EM = '3 de setembro de 2026'
+const ATUALIZADO_EM = '30 de setembro de 2026'
 
 const elo = (destino, texto, standalone) =>
   standalone
@@ -37,84 +39,85 @@ export function telaPrivacidade({ standalone = false } = {}) {
   return moldura(
     'Política de Privacidade',
     `
-    <p>Esta política explica quais dados pessoais o <strong>Studio Slot</strong> trata
-    quando você usa o aplicativo para reservar salas e cenários de estúdio fotográfico,
-    para que usamos esses dados e quais são os seus direitos. Ela segue a
-    <strong>Lei Geral de Proteção de Dados (Lei nº 13.709/2018 – LGPD)</strong>.</p>
+    <p>Esta política explica como o <strong>Studio Slot</strong> trata dados pessoais no
+    aplicativo de gestão para fotógrafos (preços, leads, clientes, contratos e financeiro),
+    seguindo a <strong>Lei Geral de Proteção de Dados (Lei nº 13.709/2018 – LGPD)</strong>.</p>
 
-    <h2>Quem trata seus dados</h2>
-    <p>O Studio Slot é a plataforma que fornece o aplicativo. Cada <strong>estúdio</strong>
-    que usa a plataforma para receber reservas é responsável pelos dados das reservas feitas
-    com ele. Plataforma e estúdio atuam cada um em seu papel: a plataforma cuida da sua conta
-    e da infraestrutura; o estúdio cuida da operação da reserva (agenda, atendimento, nota).</p>
-
-    <h2>Dados que coletamos</h2>
+    <h2>Quem é responsável por quais dados</h2>
     <ul>
-      <li><strong>Cadastro:</strong> nome, e-mail e telefone.</li>
-      <li><strong>Reservas:</strong> sala/cenário escolhido, data, horário, extras, valor,
-        status do pagamento e o registro do aceite das regras (data e hora).</li>
-      <li><strong>Comunicação:</strong> mensagens trocadas com o estúdio a respeito da reserva.</li>
-      <li><strong>Dados técnicos:</strong> informações básicas de acesso e um armazenamento
-        local no seu navegador para manter você conectado e guardar preferências do app.
-        Não usamos rastreadores de publicidade.</li>
-      <li><strong>Documento de identificação</strong> (ex.: CPF): só se o estúdio pedir,
-        quando for necessário para emissão de nota fiscal.</li>
+      <li><strong>Dados da sua conta</strong> (você, fotógrafo ou fotógrafa que assina o app):
+        o Studio Slot é o <strong>controlador</strong>.</li>
+      <li><strong>Dados dos seus leads e clientes</strong> que você cadastra no app: <strong>você
+        é o controlador</strong> — decide o que cadastrar e para quê. O Studio Slot é
+        <strong>operador</strong>: guarda e processa esses dados só para fazer o app funcionar para você,
+        seguindo suas instruções, e não usa esses dados para nenhuma outra finalidade.</li>
     </ul>
+
+    <h2>Dados que o app guarda</h2>
+    <ul>
+      <li><strong>Sua conta:</strong> nome, e-mail, telefone, nome e marca do negócio (logo, cores).</li>
+      <li><strong>Seu negócio:</strong> custos, equipamentos, pacotes, preços, lançamentos financeiros e,
+        se você preencher, seu nome ou razão social, CPF/CNPJ e endereço para os contratos.</li>
+      <li><strong>Seus leads e clientes:</strong> nome, WhatsApp, e-mail, Instagram, data de nascimento,
+        CPF e endereço (usados no contrato), histórico de atendimento, compras e contratos gerados.</li>
+      <li><strong>Família dos seus clientes:</strong> nome, parentesco e datas (nascimento ou data prevista
+        do parto), usados apenas para os lembretes de aniversário, festa e parto.</li>
+      <li><strong>Dados técnicos:</strong> o necessário para manter você conectado. Não usamos
+        rastreadores de publicidade.</li>
+    </ul>
+
+    <h2>Dados de crianças</h2>
+    <p>O app permite cadastrar filhos dos seus clientes (nome, parentesco e data de nascimento) para os
+    lembretes. Esses dados são tratados no melhor interesse da criança (art. 14 da LGPD): <strong>não
+    guardamos fotos nem documentos de crianças</strong>, e os dados só aparecem para você. Cabe a você,
+    como controlador, cadastrar só o que o responsável pela criança concordou em compartilhar.</p>
 
     <h2>Para que usamos</h2>
     <ul>
-      <li>Criar e manter sua conta.</li>
-      <li>Processar e gerenciar suas reservas.</li>
-      <li>Enviar confirmações e avisos sobre a sua reserva.</li>
-      <li>Permitir o contato entre você e o estúdio.</li>
-      <li>Cumprir obrigações legais e fiscais.</li>
-      <li>Prevenir fraudes e manter a segurança do serviço.</li>
+      <li>Fazer o app funcionar: calcular preços, organizar leads e clientes, gerar contratos,
+        mostrar lembretes e o fluxo de caixa.</li>
+      <li>Manter sua conta e sua assinatura.</li>
+      <li>Cumprir obrigações legais e manter o serviço seguro.</li>
     </ul>
+    <p>Nós <strong>não vendemos</strong> dados pessoais e <strong>não entramos em contato</strong> com os
+    seus clientes. As mensagens de WhatsApp saem do seu próprio celular.</p>
 
     <h2>Bases legais</h2>
-    <p>Tratamos seus dados para <strong>executar o contrato</strong> de uso e a reserva,
-    para <strong>cumprir obrigações legais</strong>, com base no <strong>legítimo interesse</strong>
-    de manter o serviço seguro e, quando for o caso, com o seu <strong>consentimento</strong>.</p>
+    <p>Para os dados da sua conta: execução do contrato de assinatura, cumprimento de obrigação legal e
+    legítimo interesse em manter o serviço seguro. Para os dados dos seus clientes: a base legal é
+    definida por você, como controlador (em geral, a execução do contrato com o seu cliente).</p>
 
-    <h2>Pagamento</h2>
-    <p>Os pagamentos das reservas são feitos por <strong>Pix</strong>. Não coletamos nem
-    armazenamos dados de cartão de crédito. Se, no futuro, a plataforma passar a oferecer
-    pagamento por cartão, ele será processado por um provedor de pagamento especializado,
-    e os dados do cartão nunca ficarão com o Studio Slot.</p>
+    <h2>Segurança</h2>
+    <p>Cada conta só enxerga os próprios dados (regras de acesso no banco de dados), a comunicação é
+    criptografada e as cópias de segurança do banco são criptografadas. Nem a equipe da plataforma
+    acessa os números do seu negócio ou os dados dos seus clientes pelo app.</p>
 
     <h2>Com quem compartilhamos</h2>
     <ul>
-      <li><strong>Com o estúdio</strong> em que você faz a reserva.</li>
-      <li><strong>Com fornecedores que operam a plataforma</strong> em nosso nome — hospedagem,
-        banco de dados e autenticação (Supabase) e, quando ativados, serviços de envio de
-        e-mail e de pagamento.</li>
-      <li><strong>Com autoridades</strong>, quando exigido por lei ou ordem judicial.</li>
+      <li><strong>Fornecedores que operam a plataforma:</strong> banco de dados e login (Supabase, com
+        dados em São Paulo, Brasil), hospedagem do site (Netlify) e cobrança da assinatura (LastLink).</li>
+      <li><strong>Autoridades</strong>, quando exigido por lei ou ordem judicial.</li>
     </ul>
-    <p>Nós <strong>não vendemos</strong> seus dados pessoais.</p>
+    <p>Alguns fornecedores podem processar dados fora do país; nesses casos, exigimos garantias de
+    proteção compatíveis com a LGPD.</p>
 
-    <h2>Onde seus dados ficam</h2>
-    <p>Nosso banco de dados fica hospedado na região de <strong>São Paulo, Brasil</strong>.
-    Alguns fornecedores podem processar dados fora do país; nesses casos, exigimos garantias
-    de proteção compatíveis com a LGPD.</p>
+    <h2>Pagamento da assinatura</h2>
+    <p>A assinatura é cobrada pelo LastLink. O Studio Slot não recebe nem guarda dados de cartão.</p>
 
     <h2>Por quanto tempo guardamos</h2>
-    <p>Mantemos seus dados enquanto sua conta existir e pelo tempo necessário para cumprir
-    obrigações legais (por exemplo, prazos fiscais). Depois disso, os dados são excluídos
-    ou anonimizados.</p>
+    <p>Enquanto sua conta existir. Se você pedir o encerramento da conta, apagamos seus dados e os dos seus
+    clientes em até 30 dias, exceto o que a lei obrigar a guardar. Você pode apagar clientes, leads e
+    lançamentos a qualquer momento pelo próprio app (contratos assinados só saem junto com a ficha da cliente).</p>
 
-    <h2>Seus direitos</h2>
-    <p>A qualquer momento você pode pedir: confirmação de que tratamos seus dados; acesso aos
-    dados; correção de dados incompletos ou desatualizados; anonimização ou exclusão;
-    portabilidade; informação sobre com quem compartilhamos; e revogação do consentimento.
-    Para exercer, fale com o estúdio pelos canais do app ou escreva para
+    <h2>Seus direitos (e os dos seus clientes)</h2>
+    <p>Você pode pedir confirmação, acesso, correção, exclusão, portabilidade e informações sobre
+    compartilhamento dos seus dados. Pedidos de <strong>clientes seus</strong> sobre os dados deles devem
+    ser feitos a você, que é o controlador — e nós te ajudamos a atender. Fale com a gente em
     <a href="mailto:${CONTATO_PRIVACIDADE}">${CONTATO_PRIVACIDADE}</a>.</p>
 
-    <h2>Menores de idade</h2>
-    <p>O aplicativo não é destinado a menores de 18 anos.</p>
-
     <h2>Mudanças nesta política</h2>
-    <p>Podemos atualizar este texto. Quando a mudança for relevante, avisamos no app.
-    A data no topo indica a versão vigente.</p>
+    <p>Podemos atualizar este texto. Quando a mudança for relevante, avisamos no app. A data no topo
+    indica a versão vigente.</p>
   `,
     standalone,
   )
@@ -124,42 +127,42 @@ export function telaTermos({ standalone = false } = {}) {
   return moldura(
     'Termos de Uso',
     `
-    <p>Ao criar uma conta e usar o <strong>Studio Slot</strong>, você concorda com estas
-    condições. Elas valem junto com a Política de Privacidade (link no fim da página).</p>
+    <p>Ao criar uma conta e usar o <strong>Studio Slot</strong>, você concorda com estas condições. Elas
+    valem junto com a Política de Privacidade (link no fim da página).</p>
 
     <h2>O que é o serviço</h2>
-    <p>O Studio Slot é uma plataforma que conecta fotógrafos a estúdios para reserva de salas
-    e cenários por hora. A plataforma <strong>não é o estúdio</strong>: as salas, os preços,
-    as regras de uso e a política de cancelamento são definidos por cada estúdio.</p>
+    <p>O Studio Slot é um aplicativo de gestão para fotógrafos: precificação de pacotes e campanhas,
+    leads, clientes e lembretes, contratos e fluxo de caixa do negócio.</p>
 
-    <h2>Sua conta</h2>
-    <p>Você é responsável pelos dados que informa e por manter sua senha em segurança.
-    Use o serviço de forma lícita e não tente burlar a agenda, os pagamentos ou o acesso
-    de outras pessoas.</p>
+    <h2>Assinatura</h2>
+    <p>O acesso é por assinatura do plano <strong>Pro</strong> — R$ 59 por mês ou R$ 590 por ano — cobrada
+    pelo LastLink. Não há plano gratuito. O acesso é liberado depois da confirmação do pagamento. Você
+    pode cancelar quando quiser pelo LastLink; o acesso continua até o fim do período já pago.
+    Mudanças de preço valem só a partir da renovação seguinte e são avisadas com antecedência.</p>
 
-    <h2>Reservas e pagamento</h2>
-    <p>Ao escolher um horário, ele fica reservado por tempo limitado enquanto você conclui
-    o pagamento por Pix. A reserva só se torna definitiva depois que o estúdio confirma o
-    recebimento. Os valores, extras e faixas de preço são os exibidos no momento da reserva.</p>
+    <h2>Sua conta e seus dados</h2>
+    <p>Você é responsável pelos dados que informa, por manter sua senha em segurança e por usar o app de
+    forma lícita. Os dados dos seus leads e clientes são seus: você é responsável por ter autorização
+    para cadastrá-los (inclusive dados de crianças, com a concordância do responsável) e por atender os
+    pedidos deles sobre esses dados.</p>
 
-    <h2>Cancelamento e remarcação</h2>
-    <p>Cada estúdio define seus próprios prazos e a taxa aplicável. As condições vigentes
-    aparecem na tela da sua reserva antes de você confirmar qualquer alteração. Os estornos
-    e repasses seguem o combinado com o estúdio.</p>
-
-    <h2>Responsabilidades</h2>
-    <p>O estúdio é responsável pela sala, pelos equipamentos e pelo atendimento no local.
-    A plataforma é responsável pelo funcionamento do aplicativo. Na medida permitida em lei,
-    o Studio Slot não responde por prejuízos decorrentes do uso do espaço físico ou de
-    acordos feitos diretamente entre você e o estúdio.</p>
+    <h2>Cálculos e contratos</h2>
+    <p>Os preços sugeridos, o fluxo de caixa e os alertas são <strong>ferramentas de apoio</strong> baseadas
+    nos números que você informa. Eles não substituem a orientação de um contador. O modelo de contrato
+    de exemplo é só um ponto de partida e <strong>não é orientação jurídica</strong>: revise seus contratos
+    com um advogado. O app não faz assinatura eletrônica; a assinatura é combinada entre você e o seu cliente.</p>
 
     <h2>Disponibilidade</h2>
-    <p>Buscamos manter o serviço no ar, mas ele pode passar por manutenções e interrupções.
-    Podemos alterar ou encerrar funcionalidades, avisando quando a mudança for relevante.</p>
+    <p>Buscamos manter o serviço no ar, mas ele pode passar por manutenções e interrupções. Podemos
+    alterar ou encerrar funcionalidades, avisando quando a mudança for relevante.</p>
+
+    <h2>Encerramento</h2>
+    <p>Você pode pedir o encerramento da conta a qualquer momento. Podemos suspender contas com pagamento
+    em atraso ou que usem o serviço de forma ilícita.</p>
 
     <h2>Alterações destes termos</h2>
-    <p>Podemos atualizar estes termos. O uso continuado do serviço após uma mudança
-    significa que você concorda com a nova versão. A data no topo indica a versão vigente.</p>
+    <p>Podemos atualizar estes termos. O uso continuado depois de uma mudança significa que você concorda
+    com a nova versão. A data no topo indica a versão vigente.</p>
 
     <h2>Contato</h2>
     <p>Dúvidas sobre estes termos: <a href="mailto:${CONTATO_PRIVACIDADE}">${CONTATO_PRIVACIDADE}</a>.</p>

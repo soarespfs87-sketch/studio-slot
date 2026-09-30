@@ -1,6 +1,6 @@
 // Telas de acesso: entrar, criar conta, recuperar senha, criar o negócio.
 
-import { rodapeStudioSlot } from '../ui.js'
+import { rodapeStudioSlot, PLANO } from '../ui.js'
 
 function moldura(conteudo) {
   return `
@@ -111,17 +111,33 @@ export function telaCriarNegocio({ erro } = {}) {
 
 // Conta criada, mas a assinatura ainda não foi liberada pela plataforma.
 export function telaAguardando({ estudio }) {
+  const linkDoNegocio = estudio.lastlink_url
+  const opcao = (p, nome) => `
+    <div class="plano-op">
+      <span class="plano-nome">${nome}${p.economia ? ` <em>${p.economia}</em>` : ''}</span>
+      <strong>${p.preco}</strong><small>${p.periodo}</small>
+      ${
+        linkDoNegocio || p.link
+          ? `<a class="botao" href="${linkDoNegocio || p.link}" target="_blank" rel="noopener">Assinar</a>`
+          : ''
+      }
+    </div>`
   return moldura(`
-    <div class="feito">
-      <div class="feito-check feito-neutro">&#8987;</div>
-      <h1 class="titulo-grande">Falta liberar sua assinatura</h1>
-      <p>A conta do <strong>${estudio.nome}</strong> foi criada e está aguardando a
-         liberação do plano (assim que o pagamento for confirmado).</p>
-      <p class="acesso-sub">Assim que liberar, o app abre aqui.</p>
-      <div class="rodape-links" style="margin-top: 20px">
-        <button class="link-dono" data-acao="recarregar">Já foi liberado? Recarregar</button>
-        <button class="link-dono" data-acao="sair">Sair</button>
-      </div>
+    <h1 class="titulo-grande">Falta só a assinatura</h1>
+    <p class="acesso-sub">A conta do <strong>${estudio.nome}</strong> está criada. Assine o plano Pro pra liberar
+      preços, leads, clientes, contratos e financeiro.</p>
+    <div class="planos">
+      ${opcao(PLANO.mensal, 'Pro mensal')}
+      ${opcao(PLANO.anual, 'Pro anual')}
+    </div>
+    ${
+      linkDoNegocio || PLANO.mensal.link || PLANO.anual.link
+        ? '<p class="acesso-sub">Depois do pagamento, a liberação é feita em até 1 dia útil.</p>'
+        : `<p class="acesso-sub">Pra assinar, fale com a gente: <a href="mailto:${PLANO.contato}?subject=Assinatura%20Studio%20Slot">${PLANO.contato}</a>.</p>`
+    }
+    <div class="rodape-links" style="margin-top: 20px">
+      <button class="link-dono" data-acao="recarregar">Já assinei — recarregar</button>
+      <button class="link-dono" data-acao="sair">Sair</button>
     </div>
   `)
 }

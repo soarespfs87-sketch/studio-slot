@@ -7,6 +7,15 @@
 export const DOMINIO = 'studioslot.app.br'
 export const enderecoEstudio = (slug) => `${DOMINIO}/${slug}`
 
+// Plano e links de pagamento (LastLink). Links vazios = a tela de assinatura
+// mostra só o contato. O admin também pode pôr um link próprio por negócio
+// no Painel da Plataforma (esse tem prioridade).
+export const PLANO = {
+  mensal: { preco: 'R$ 59', periodo: 'por mês', link: '' },
+  anual: { preco: 'R$ 590', periodo: 'por ano', economia: '2 meses grátis', link: '' },
+  contato: 'soarespfs87@gmail.com',
+}
+
 // Ícone de abertura de lente. `cls` opcional para estilizar.
 export const aperture = (cls = '') => `
 <svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">

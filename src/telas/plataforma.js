@@ -5,9 +5,9 @@ import { supabase } from '../supabase.js'
 import { DOMINIO } from '../ui.js'
 
 export const FAIXAS_PLANO = [
-  ['basico', 'Básico · R$197 (até 2 salas)'],
-  ['plus', 'Plus · R$297 (até 5 salas)'],
-  ['ilimitado', 'Ilimitado · R$497'],
+  ['pro_mensal', 'Pro mensal · R$ 59'],
+  ['pro_anual', 'Pro anual · R$ 590'],
+  ['cortesia', 'Cortesia (teste)'],
 ]
 const rotuloFaixa = (v) => FAIXAS_PLANO.find(([k]) => k === v)?.[1] || 'sem faixa definida'
 
@@ -108,7 +108,7 @@ export function telaPlataforma({ estudios, hoje, comSair = false }) {
     <section class="modulo">
       <h1 class="titulo-grande">Painel da Plataforma</h1>
       <p class="detalhe-desc">
-        Libere o plano depois de confirmar o pagamento no LastLink. A faixa, o
+        Libere o plano depois de confirmar o pagamento no LastLink (ou marque Cortesia pros fotógrafos do teste). A faixa, o
         vencimento e o link ficam aqui só como registro — a cobrança é feita no LastLink.
       </p>
 
