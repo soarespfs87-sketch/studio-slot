@@ -9,6 +9,21 @@ import { carregarPrecos, mensagemDeErro } from './dados.js'
 import { renderBase } from './base.js'
 import { renderLista, renderEditor } from './servicos.js'
 import { renderCalculadora } from './calculadora.js'
+import { carregarLeads } from '../leads/dados.js'
+import { carregarLancamentos } from '../financeiro/dados.js'
+
+// Vagas vendidas (leads fechados) e recebido (entradas pagas) por pacote/campanha.
+function calcularVendas(leads, lancamentos) {
+  const v = {}
+  const de = (id) => (v[id] ||= { vendidas: 0, faturado: 0, investimentoLancado: false })
+  for (const l of leads || []) if (l.etapa === 'fechado' && l.servico_id) de(l.servico_id).vendidas++
+  for (const x of lancamentos || []) {
+    if (!x.servico_id) continue
+    if (x.grupo === 'receita_op' && x.status === 'pago') de(x.servico_id).faturado += x.valor_centavos
+    if (x.grupo === 'despesa_nao_op' && x.categoria === 'Investimento') de(x.servico_id).investimentoLancado = true
+  }
+  return v
+}
 
 const ABAS = [
   ['base', 'Base do negócio'],
@@ -22,7 +37,13 @@ export async function render(el, ctx) {
 
   if (!ctx.negocio) return
   el.innerHTML = '<section class="modulo"><h1 class="titulo-grande">Preços</h1><p class="vazio">Carregando…</p></section>'
-  const { dados, error } = await carregarPrecos(ctx.negocio.id)
+  const [{ dados, error: e1 }, rl, rf] = await Promise.all([
+    carregarPrecos(ctx.negocio.id),
+    carregarLeads(ctx.negocio.id),
+    carregarLancamentos(ctx.negocio.id),
+  ])
+  const error = e1 || rl.error || rf.error
+  const vendas = error ? {} : calcularVendas(rl.leads, rf.lancamentos)
   if (location.hash.replace(/^#\/?/, '').split('/')[0] !== 'precos') return // saiu enquanto carregava
   if (error) {
     el.innerHTML = `
@@ -38,7 +59,7 @@ export async function render(el, ctx) {
   // editor de pacote/campanha: tela própria, sem as abas
   if (aba === 'pacote' || aba === 'campanha') {
     el.innerHTML = '<section class="modulo modulo-largo" id="precos-corpo"></section>'
-    return renderEditor(el.querySelector('#precos-corpo'), dados, aba, id)
+    return renderEditor(el.querySelector('#precos-corpo'), dados, aba, id, vendas)
   }
 
   // sem aba no endereço: começa pela base até existir o primeiro pacote
@@ -58,7 +79,7 @@ export async function render(el, ctx) {
 
   const corpo = el.querySelector('#precos-corpo')
   if (abaAtual === 'base') renderBase(corpo, dados)
-  else if (abaAtual === 'pacotes') renderLista(corpo, dados, 'pacote')
-  else if (abaAtual === 'campanhas') renderLista(corpo, dados, 'campanha')
+  else if (abaAtual === 'pacotes') renderLista(corpo, dados, 'pacote', vendas)
+  else if (abaAtual === 'campanhas') renderLista(corpo, dados, 'campanha', vendas)
   else renderCalculadora(corpo, dados)
 }

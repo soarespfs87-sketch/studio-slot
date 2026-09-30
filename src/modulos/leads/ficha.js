@@ -5,10 +5,12 @@
 // ────────────────────────────────────────────────────────────────
 
 import { esc } from '../../componentes/campos.js'
-import { formatarReais, centavosParaCampo, paraCentavos } from '../../calculos.js'
+import { formatarReais, centavosParaCampo, paraCentavos, dividirSinal } from '../../calculos.js'
 import { hojeISO } from '../../format.js'
 import {
   atualizarLead,
+  fecharLead,
+  reabrirLead,
   apagarLead,
   carregarEventos,
   registrarEvento,
@@ -116,7 +118,26 @@ function painelFechar(l, servicos) {
         <label class="campo dono-campo"><span>Data da sessão *</span>
           <input type="date" id="f-data" value="${l.data_sessao || l.data_prevista || ''}" /></label>
       </div>
-      <p class="campo-dica">A forma de pagamento (sinal + saldo) entra junto com o Financeiro.</p>
+      <h3 class="sub-titulo">Como vai pagar</h3>
+      <div class="alternar" role="radiogroup" aria-label="Condição de pagamento">
+        <label><input type="radio" name="condicao" value="sinal" checked /><span>Sinal + saldo</span></label>
+        <label><input type="radio" name="condicao" value="avista" /><span>À vista</span></label>
+      </div>
+      <div class="dono-grid2">
+        <label class="campo dono-campo" data-so="sinal"><span>Sinal</span>
+          <div class="entrada-prefixo entrada-sufixo"><input type="text" inputmode="decimal" id="f-sinal-pct" value="30" /><em>%</em></div></label>
+        <label class="campo dono-campo" data-so="sinal"><span>Sinal vence em</span>
+          <input type="date" id="f-sinal-venc" value="${hojeISO()}" /></label>
+        <label class="campo dono-campo" data-so="avista" hidden><span>Vence em</span>
+          <input type="date" id="f-avista-venc" value="${hojeISO()}" /></label>
+        <label class="campo dono-campo"><span>Forma de pagamento</span>
+          <select id="f-forma">
+            <option value="pix">Pix</option><option value="cartao">Cartão</option><option value="transferencia">Transferência</option>
+            <option value="dinheiro">Dinheiro</option><option value="boleto">Boleto</option>
+          </select></label>
+      </div>
+      <p class="campo-dica" id="f-divisao"></p>
+      <p class="campo-dica">As entradas entram no Financeiro como previstas; você marca "recebi" quando o dinheiro cair.</p>
       <div id="f-aviso"></div>
       <p class="form-erro" id="f-erro" hidden></p>
       <div class="linha-acao">
@@ -163,6 +184,7 @@ function dadosLead(l, servicos) {
         ${linha('Valor estimado', l.valor_estimado_centavos != null ? formatarReais(l.valor_estimado_centavos) : '')}
         ${l.etapa === 'fechado' ? linha('Valor fechado', `<strong>${formatarReais(l.valor_fechado_centavos)}</strong>`) : ''}
         ${l.etapa === 'fechado' ? linha('Sessão', dataComDia(l.data_sessao)) : ''}
+        ${l.etapa === 'fechado' ? linha('Pagamento', `<a href="#/financeiro">ver no Financeiro →</a>`) : ''}
         ${l.etapa === 'perdido' ? linha('Motivo da perda', esc(rotuloMotivo(l.motivo_perda))) : ''}
       </dl>
       ${l.observacoes ? `<p class="ficha-obs">${esc(l.observacoes).replace(/\n/g, '<br>')}</p>` : ''}
@@ -260,8 +282,9 @@ export function renderFicha(el, { lead, servicos, baseRateio, negocio, abrir }) 
     s.dataset.tipo = tipo
   }
 
-  const salvar = async (patch, depois) => {
-    const { lead: novo, error } = await atualizarLead(l.id, patch)
+  // acao: função que grava e devolve { lead, error }. Padrão: atualizar campos do lead.
+  const salvar = async (patch, depois, acao = () => atualizarLead(l.id, patch)) => {
+    const { lead: novo, error } = await acao()
     if (error) {
       status(mensagemDeErro(error))
       return false
@@ -310,9 +333,21 @@ export function renderFicha(el, { lead, servicos, baseRateio, negocio, abrir }) 
         desenhar()
       }),
     )
-    on('[data-acao="reabrir"]', () => {
-      if (!confirm('Reabrir este lead? Ele volta pra Negociação.')) return
-      salvar({ etapa: 'negociacao' }, 'Reaberto ✓')
+    on('[data-acao="reabrir"]', async () => {
+      const msg = l.etapa === 'fechado'
+        ? 'Reabrir este lead? Ele volta pra Negociação e as entradas ainda não recebidas saem do Financeiro.'
+        : 'Reabrir este lead? Ele volta pra Negociação.'
+      if (!confirm(msg)) return
+      let pagas = 0
+      await salvar(null, null, async () => {
+        const r = await reabrirLead(l.id)
+        pagas = r.pagas || 0
+        return r
+      })
+      status(
+        pagas ? `Reaberto ✓ ${pagas} ${pagas === 1 ? 'entrada já recebida continua' : 'entradas já recebidas continuam'} no Financeiro.` : 'Reaberto ✓',
+        pagas ? 'info' : 'ok',
+      )
     })
     on('[data-acao="apagar"]', async () => {
       if (!confirm(`Apagar "${l.nome}" e todo o histórico? Não dá pra desfazer.`)) return
@@ -385,6 +420,24 @@ export function renderFicha(el, { lead, servicos, baseRateio, negocio, abrir }) 
       formF.querySelector('#f-valor').addEventListener('input', () => (desconfirmar(), checar()))
       checar()
 
+      // condição de pagamento: mostra os campos certos e a divisão sinal/saldo
+      const condicao = () => formF.querySelector('input[name="condicao"]:checked').value
+      const mostrarDivisao = () => {
+        formF.querySelectorAll('[data-so]').forEach((c) => (c.hidden = c.dataset.so !== condicao()))
+        const valor = paraCentavos(formF.querySelector('#f-valor').value)
+        const pct = Number(String(formF.querySelector('#f-sinal-pct').value).replace(',', '.'))
+        formF.querySelector('#f-divisao').innerHTML =
+          condicao() === 'sinal' && valor > 0 && pct > 0 && pct < 100
+            ? (() => {
+                const d = dividirSinal(valor, pct)
+                return `Sinal <strong>${formatarReais(d.sinal)}</strong> · saldo <strong>${formatarReais(d.saldo)}</strong> (vence na data da sessão)`
+              })()
+            : ''
+      }
+      formF.addEventListener('input', mostrarDivisao)
+      formF.addEventListener('change', mostrarDivisao)
+      mostrarDivisao()
+
       formF.addEventListener('submit', (e) => {
         e.preventDefault()
         const erro = formF.querySelector('#f-erro')
@@ -393,6 +446,9 @@ export function renderFicha(el, { lead, servicos, baseRateio, negocio, abrir }) 
         const mostrar = (msg) => ((erro.textContent = msg), (erro.hidden = false))
         if (!(valor > 0)) return mostrar('Qual foi o valor fechado?')
         if (!data) return mostrar('Qual a data da sessão?')
+        const cond = condicao()
+        const sinalPct = Number(String(formF.querySelector('#f-sinal-pct').value).replace(',', '.'))
+        if (cond === 'sinal' && !(sinalPct > 0 && sinalPct < 100)) return mostrar('O sinal precisa ser entre 1% e 99%.')
         erro.hidden = true
 
         const r = checar()
@@ -403,15 +459,17 @@ export function renderFicha(el, { lead, servicos, baseRateio, negocio, abrir }) 
           return
         }
         btn.disabled = true
-        salvar(
-          {
-            etapa: 'fechado',
-            valor_fechado_centavos: valor,
-            data_sessao: data,
-            servico_id: formF.querySelector('#f-servico').value || null,
-            proximo_followup: null,
-          },
-          'Negócio fechado! 🎉',
+        salvar(null, 'Negócio fechado! 🎉 As entradas já estão no Financeiro como previstas.', () =>
+          fecharLead(l.id, {
+            valor,
+            dataSessao: data,
+            servicoId: formF.querySelector('#f-servico').value || null,
+            condicao: cond,
+            sinalPct,
+            sinalVencimento: formF.querySelector('#f-sinal-venc').value || null,
+            avistaVencimento: formF.querySelector('#f-avista-venc').value || null,
+            forma: formF.querySelector('#f-forma').value,
+          }),
         ).then((ok) => {
           if (ok && location.hash.endsWith('/fechar')) history.replaceState(null, '', `#/leads/${l.id}`)
           if (!ok) btn.disabled = false

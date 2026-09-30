@@ -20,6 +20,11 @@ import {
 } from './ui.js'
 import { precoDoServico, arredondarPraCimaDe10, centavosParaCampo, paraCentavos, paraNumero } from '../../calculos.js'
 import { dataCurta } from '../../format.js'
+import { salvarLancamento } from '../financeiro/dados.js'
+
+// Vendas de cada pacote/campanha (vem dos leads fechados e do financeiro):
+// { [servicoId]: { vendidas, faturado, investimentoLancado } }
+let _vendas = {}
 
 const GRUPOS = [
   ['equipe', 'Equipe'],
@@ -52,6 +57,7 @@ const NOME = {
 //  Lista
 // ════════════════════════════════════════════════════════════════
 function cartaoServico(s, baseRateio) {
+  const v = _vendas[s.id]
   const r = precoDoServico(s, baseRateio)
   const periodo =
     s.tipo === 'campanha' && s.inicio ? `<span>${dataCurta(s.inicio)} a ${dataCurta(s.fim)}</span>` : ''
@@ -74,14 +80,17 @@ function cartaoServico(s, baseRateio) {
         <span>Margem real ${formatarPct(r.margemReal)} (pediu ${formatarPct(s.margem_pct, 0)})</span>
         ${
           s.tipo === 'campanha'
-            ? `<span>${r.sessoesParaCenario == null ? 'o cenário não se paga' : `${r.sessoesParaCenario} de ${s.vagas} vagas pagam o cenário`}</span>${periodo}`
+            ? `<span>${r.sessoesParaCenario == null ? 'o cenário não se paga' : `${r.sessoesParaCenario} de ${s.vagas} vagas pagam o cenário`}</span>${periodo}${
+                v?.vendidas ? `<span class="sc-vendas">${v.vendidas} vendida${v.vendidas > 1 ? 's' : ''} · ${formatarReais(v.faturado)} recebido</span>` : ''
+              }`
             : `<span>até ${s.limite_operacional}/mês</span>`
         }
       </div>
     </a>`
 }
 
-export function renderLista(el, dados, tipo) {
+export function renderLista(el, dados, tipo, vendas = {}) {
+  _vendas = vendas
   const base = baseAtual(dados)
   const itens = dados.servicos.filter((s) => s.tipo === tipo)
   const n = NOME[tipo]
@@ -232,6 +241,29 @@ function formEditor(s, ehNovo) {
     </form>`
 }
 
+// Campanha já salva: vagas vendidas, recebido e o investimento no Financeiro.
+function blocoVendasCampanha(s) {
+  const v = _vendas[s.id] || { vendidas: 0, faturado: 0, investimentoLancado: false }
+  const total = (s.investimento || []).reduce((t, i) => t + (i.valor_centavos || 0), 0)
+  const pct = s.vagas ? Math.min(100, Math.round((v.vendidas / s.vagas) * 100)) : 0
+  return `
+    <div class="cartao-bloco campanha-vendas">
+      <div class="cv-numeros">
+        <div><span>Vagas vendidas</span><strong>${v.vendidas} de ${s.vagas}</strong></div>
+        <div><span>Já recebido</span><strong>${formatarReais(v.faturado)}</strong></div>
+      </div>
+      <div class="cv-barra" role="img" aria-label="${pct}% das vagas vendidas"><span style="width:${pct}%"></span></div>
+      ${
+        total > 0 && !v.investimentoLancado
+          ? `<button type="button" class="mini-btn mini-btn-primario" data-acao="lancar-invest">Lançar o investimento (${formatarReais(total)}) no Financeiro</button>`
+          : total > 0
+            ? '<p class="campo-dica">Investimento já lançado no Financeiro ✓</p>'
+            : ''
+      }
+      <p class="status-salvo" id="vendas-status"></p>
+    </div>`
+}
+
 function painelResultado(s, r) {
   if (!r.ok) {
     return `<div class="resultado"><p class="resultado-falta">${r.falta}</p></div>`
@@ -350,7 +382,8 @@ function validar(s) {
   return null
 }
 
-export function renderEditor(el, dados, tipo, id) {
+export function renderEditor(el, dados, tipo, id, vendas = {}) {
+  _vendas = vendas
   const ehNovo = !id || id === 'novo'
   const existente = ehNovo ? null : dados.servicos.find((s) => s.id === id && s.tipo === tipo)
   if (!ehNovo && !existente) {
@@ -369,6 +402,7 @@ function desenhar(el, dados, s, ehNovo, focar) {
   el.innerHTML = `
     <a class="link-voltar-mod" href="#/precos/${n.lista}">&larr; ${n.titulo}</a>
     <h2 class="titulo-editor">${ehNovo ? n.novo : esc(s.nome)}</h2>
+    ${!ehNovo && s.tipo === 'campanha' ? blocoVendasCampanha(s) : ''}
     <div class="editor-grid">
       <div class="editor-form">${formEditor(s, ehNovo)}</div>
       <aside class="editor-resultado" id="resultado" aria-live="polite"></aside>
@@ -395,6 +429,32 @@ function desenhar(el, dados, s, ehNovo, focar) {
   form.addEventListener('input', recalcular)
 
   const redesenhar = (foco) => desenhar(el, dados, s, ehNovo, foco)
+
+  // campanha salva: lançar o investimento no Financeiro (como previsto)
+  el.querySelector('[data-acao="lancar-invest"]')?.addEventListener('click', async (e) => {
+    const total = s.investimento.reduce((t, i) => t + (i.valor_centavos || 0), 0)
+    e.target.disabled = true
+    const { error } = await salvarLancamento({
+      grupo: 'despesa_nao_op',
+      categoria: 'Investimento',
+      descricao: `Cenário e investimento · ${s.nome}`,
+      valor_centavos: total,
+      status: 'previsto',
+      vencimento: s.inicio,
+      servico_id: s.id,
+    })
+    const aviso = el.querySelector('#vendas-status')
+    if (error) {
+      e.target.disabled = false
+      aviso.textContent = 'Não deu pra lançar: ' + (error.message || '')
+      aviso.dataset.tipo = 'erro'
+      return
+    }
+    _vendas[s.id] = { ...(_vendas[s.id] || {}), investimentoLancado: true }
+    e.target.remove()
+    aviso.innerHTML = `Lançado no Financeiro como previsto pra ${dataCurta(s.inicio)} ✓ <a href="#/financeiro/mes/${s.inicio.slice(0, 7)}">ver</a>`
+    aviso.dataset.tipo = 'ok'
+  })
 
   // adicionar / remover custos e investimentos
   form.addEventListener('click', (e) => {

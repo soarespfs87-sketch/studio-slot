@@ -206,3 +206,134 @@ export function calculadoraRapida({
     lucratividade: (lucro / preco) * 100,
   }
 }
+
+// ════════════════════════════════════════════════════════════════
+//  Financeiro — fluxo de caixa mensal (briefing, seção 5)
+//  Regime de caixa: um lançamento conta no mês do "pago em".
+//  Meses no formato 'AAAA-MM'.
+// ════════════════════════════════════════════════════════════════
+
+// Grupos da DRE da planilha, na ordem da cascata. sinal: +1 entra, -1 sai.
+export const GRUPOS_DRE = [
+  { id: 'receita_op', rotulo: 'Receitas operacionais', sinal: 1 },
+  { id: 'custo_direto', rotulo: 'Custo direto', sinal: -1 },
+  { id: 'custo_variavel', rotulo: 'Custo variável', sinal: -1 },
+  { id: 'custo_fixo', rotulo: 'Custos fixos', sinal: -1 },
+  { id: 'receita_nao_op', rotulo: 'Receitas não operacionais', sinal: 1 },
+  { id: 'despesa_nao_op', rotulo: 'Despesas não operacionais', sinal: -1 },
+]
+export const CATEGORIA_RETIRADA = 'Retirada extra do sócio'
+export const CATEGORIA_IMPOSTO = 'Imposto'
+
+export const mesDe = (iso) => String(iso || '').slice(0, 7)
+
+export function somarMeses(mes, n) {
+  const [a, m] = mes.split('-').map(Number)
+  const t = a * 12 + (m - 1) + n
+  return `${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, '0')}`
+}
+
+const mesesEntre = (de, ate) => {
+  const [a1, m1] = de.split('-').map(Number)
+  const [a2, m2] = ate.split('-').map(Number)
+  return (a2 - a1) * 12 + (m2 - m1)
+}
+
+// Depreciação que cai num mês: só equipamentos já comprados e ainda dentro da vida útil.
+// (sem data de compra: conta todo mês)
+export function depreciacaoNoMes(equipamentos, mes) {
+  return soma(
+    (equipamentos || []).filter((e) => {
+      if (e.ativo === false || !(e.vida_util_meses > 0)) return false
+      if (!e.data_compra) return true
+      const passados = mesesEntre(mesDe(e.data_compra), mes)
+      return passados >= 0 && passados < e.vida_util_meses
+    }),
+    (e) => (e.valor_compra_centavos - (e.valor_revenda_centavos || 0)) / e.vida_util_meses,
+  )
+}
+
+// A cascata de um mês, a partir dos lançamentos PAGOS naquele mês.
+export function resultadoDoMes(pagosNoMes, depreciacao = 0) {
+  const porGrupo = Object.fromEntries(GRUPOS_DRE.map((g) => [g.id, { total: 0, categorias: {} }]))
+  let retiradaExtra = 0
+  let impostoLancado = 0
+  for (const l of pagosNoMes || []) {
+    const g = porGrupo[l.grupo]
+    if (!g) continue
+    g.total += l.valor_centavos
+    g.categorias[l.categoria] = (g.categorias[l.categoria] || 0) + l.valor_centavos
+    if (l.categoria === CATEGORIA_RETIRADA) retiradaExtra += l.valor_centavos
+    if (l.grupo === 'custo_variavel' && /^imposto/i.test(l.categoria)) impostoLancado += l.valor_centavos
+  }
+  const t = (id) => porGrupo[id].total
+  const receitasOp = t('receita_op')
+  const margem = receitasOp - t('custo_direto')
+  const margemContribuicao = margem - t('custo_variavel')
+  const margemLiquida = margemContribuicao - t('custo_fixo')
+  const resultado = margemLiquida + t('receita_nao_op') - t('despesa_nao_op') - depreciacao
+  return {
+    porGrupo,
+    receitasOp,
+    margem,
+    margemContribuicao,
+    margemLiquida,
+    depreciacao,
+    resultado,
+    retiradaExtra,
+    impostoLancado,
+  }
+}
+
+// Fluxo de caixa de um mês, com o saldo encadeado desde o mês de início.
+export function fluxoDeCaixa({
+  lancamentos,
+  equipamentos,
+  saldoInicialInformado,
+  mesInicio,
+  mes,
+  custosFixosMes = 0,
+  impostoPct = 0,
+}) {
+  if (saldoInicialInformado == null || !mesInicio) return { ok: false, falta: 'configurar' }
+  if (mes < mesInicio) return { ok: false, falta: 'antes-do-inicio' }
+
+  const pagos = (lancamentos || []).filter((l) => l.status === 'pago' && l.pago_em)
+  const porMes = {}
+  for (const l of pagos) (porMes[mesDe(l.pago_em)] ||= []).push(l)
+
+  let saldo = saldoInicialInformado
+  let reservaEquipamento = 0
+  let r = null
+  for (let m = mesInicio; m <= mes; m = somarMeses(m, 1)) {
+    const inicioDoMes = saldo
+    r = resultadoDoMes(porMes[m], depreciacaoNoMes(equipamentos, m))
+    saldo += r.resultado
+    reservaEquipamento += r.depreciacao
+    r.saldoInicial = inicioDoMes
+  }
+  const saldoFinal = saldo
+  const folego = custosFixosMes > 0 ? Math.max(0, Math.floor(saldoFinal / custosFixosMes)) : null
+
+  const alertas = []
+  if (r.margemLiquida < 0) alertas.push({ tipo: 'margem-negativa', valor: -r.margemLiquida })
+  if (r.retiradaExtra > 0) alertas.push({ tipo: 'retirada-extra', valor: r.retiradaExtra })
+  if (impostoPct > 0 && r.receitasOp > 0 && r.impostoLancado === 0)
+    alertas.push({ tipo: 'separar-imposto', valor: arredondarCentavos((r.receitasOp * impostoPct) / 100), base: r.receitasOp })
+
+  return {
+    ok: true,
+    ...r,
+    saldoFinal,
+    reservaEquipamento,
+    dinheiroNaConta: saldoFinal + reservaEquipamento,
+    folego,
+    alertas,
+  }
+}
+
+// Condição de pagamento do fechamento: sinal + saldo (igual à função do banco).
+export function dividirSinal(valorCentavos, sinalPct) {
+  const sinal = arredondarCentavos((valorCentavos * sinalPct) / 100)
+  return { sinal, saldo: valorCentavos - sinal }
+}

@@ -3480,8 +3480,10 @@ input[type='number'],
 
 .bloco-cabeca {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 0 10px;
 }
 
 .bloco-cabeca .mini-btn {
@@ -3568,4 +3570,359 @@ input[type='number'],
 /* o conteúdo não pode esticar a grade da casca (o funil rola por dentro) */
 .casca-conteudo {
   min-width: 0;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   v2 — Módulo Financeiro
+   ════════════════════════════════════════════════════════════════ */
+.fin-botoes {
+  display: flex;
+  gap: 8px;
+}
+
+.fin-botoes .botao {
+  text-decoration: none;
+}
+
+.botao-escuro {
+  background: var(--cor-fundo);
+}
+
+.txt-verde {
+  color: var(--sinal-verde);
+}
+
+.mes-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0 4px;
+  padding: 6px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 999px;
+}
+
+.mes-nav strong {
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+}
+
+.mes-nav a,
+.mes-nav span {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--cor-primaria);
+  text-decoration: none;
+}
+
+.mes-nav a:hover {
+  background: color-mix(in srgb, var(--cor-primaria) 8%, transparent);
+}
+
+.fin-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.fin-card {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.fin-card span,
+.fin-card small {
+  font-size: 0.72rem;
+  color: var(--cor-texto-suave);
+  line-height: 1.3;
+}
+
+.fin-card strong {
+  font-size: 1.05rem;
+  margin: 2px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-card-destaque {
+  grid-column: 1 / -1;
+  background: var(--cor-fundo);
+  border-color: var(--cor-fundo);
+}
+
+.fin-card-destaque span,
+.fin-card-destaque small {
+  color: color-mix(in srgb, var(--cor-superficie) 70%, transparent);
+}
+
+.fin-card-destaque strong {
+  font-family: var(--fonte-titulo);
+  font-size: 1.9rem;
+  color: var(--cor-superficie);
+}
+
+@media (min-width: 900px) {
+  .fin-cards {
+    grid-template-columns: 2fr 1fr 1fr;
+  }
+  .fin-card-destaque {
+    grid-column: auto;
+  }
+}
+
+.fin-grid {
+  display: grid;
+  gap: 0 18px;
+}
+
+@media (min-width: 900px) {
+  .fin-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+/* Cascata (DRE) */
+.cx-linha {
+  font-size: 0.9rem;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.cx-linha:not(details),
+.cx-linha summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.cx-linha > span:last-child,
+.cx-linha summary > span:last-child,
+.cx-cat span:last-child {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cx-linha small {
+  font-size: 0.72rem;
+  color: var(--cor-texto-suave);
+}
+
+.cx-grupo summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.cx-grupo summary::-webkit-details-marker {
+  display: none;
+}
+
+.cx-grupo summary > span:first-child::before {
+  content: '▸';
+  display: inline-block;
+  width: 14px;
+  color: var(--cor-texto-suave);
+  transition: transform 0.15s;
+}
+
+.cx-grupo[open] summary > span:first-child::before {
+  transform: rotate(90deg);
+}
+
+.cx-cat {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0 3px 14px;
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
+
+.cx-cat:last-child {
+  padding-bottom: 8px;
+}
+
+.cx-sub {
+  font-weight: 600;
+  background: color-mix(in srgb, var(--cor-borda) 35%, transparent);
+  margin: 0 -8px;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+.cx-neg > span:last-child {
+  color: var(--sinal-vermelho);
+}
+
+.cx-saldo {
+  color: var(--cor-texto-suave);
+}
+
+.cx-final {
+  color: #1c1917;
+  font-weight: 700;
+  font-size: 1rem;
+  border-top: 2px solid #1c1917;
+}
+
+/* Lista de lançamentos */
+.fin-prev-resumo {
+  margin-top: 2px;
+}
+
+.lanc-lista {
+  list-style: none;
+  margin-top: 8px;
+}
+
+.lanc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.lanc-link {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 46px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 0;
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.lanc-data {
+  font-size: 0.72rem;
+  color: var(--cor-texto-suave);
+  line-height: 1.2;
+}
+
+.lanc-desc {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lanc-desc strong {
+  font-size: 0.86rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lanc-desc small {
+  font-size: 0.7rem;
+  color: var(--cor-texto-suave);
+}
+
+.lanc-valor {
+  font-size: 0.86rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lanc-entra {
+  color: var(--sinal-verde);
+}
+
+.lanc-sai {
+  color: #1c1917;
+}
+
+.lanc-atrasado .lanc-data {
+  color: var(--sinal-vermelho);
+  font-weight: 600;
+}
+
+/* Alternar (dois botões tipo interruptor) */
+.alternar {
+  display: inline-flex;
+  margin-top: 14px;
+  padding: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cor-borda) 60%, transparent);
+}
+
+.alternar label {
+  cursor: pointer;
+}
+
+.alternar input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.alternar span {
+  display: block;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--cor-texto-suave);
+}
+
+.alternar input:checked + span {
+  background: #fff;
+  color: #1c1917;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.alternar input:focus-visible + span {
+  outline: 2px solid var(--cor-primaria);
+}
+
+/* Campanha: vagas vendidas */
+.campanha-vendas {
+  margin-top: 14px;
+}
+
+.cv-numeros {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.cv-numeros div {
+  display: flex;
+  flex-direction: column;
+}
+
+.cv-numeros span {
+  font-size: 0.72rem;
+  color: var(--cor-texto-suave);
+}
+
+.cv-barra {
+  height: 8px;
+  margin: 10px 0;
+  border-radius: 999px;
+  background: var(--cor-borda);
+  overflow: hidden;
+}
+
+.cv-barra span {
+  display: block;
+  height: 100%;
+  background: var(--cor-primaria);
+}
+
+.sc-vendas {
+  color: var(--sinal-verde);
+  font-weight: 600;
 }

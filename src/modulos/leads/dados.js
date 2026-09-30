@@ -53,6 +53,38 @@ export async function apagarLead(id) {
   return { error }
 }
 
+// ---- Fechar / reabrir (funções do banco: lead + entradas no financeiro, tudo de uma vez) ----
+async function relerLead(id) {
+  const { data, error } = await supabase.from('leads').select('*').eq('id', id).single()
+  if (!error) trocarNoCache(data)
+  return { lead: data, error }
+}
+
+// f: { valor, dataSessao, servicoId, condicao: 'avista'|'sinal', sinalPct, sinalVencimento, avistaVencimento, forma }
+export async function fecharLead(id, f) {
+  const { error } = await supabase.rpc('fechar_lead', {
+    p_lead_id: id,
+    p_valor_centavos: f.valor,
+    p_data_sessao: f.dataSessao,
+    p_servico_id: f.servicoId || null,
+    p_condicao: f.condicao,
+    p_sinal_pct: f.condicao === 'sinal' ? f.sinalPct : null,
+    p_sinal_vencimento: f.condicao === 'sinal' ? f.sinalVencimento : null,
+    p_avista_vencimento: f.condicao === 'avista' ? f.avistaVencimento : null,
+    p_forma: f.forma || null,
+  })
+  if (error) return { lead: null, error }
+  return relerLead(id)
+}
+
+// Devolve quantas entradas já recebidas continuam no financeiro.
+export async function reabrirLead(id) {
+  const { data, error } = await supabase.rpc('reabrir_lead', { p_lead_id: id })
+  if (error) return { lead: null, pagas: 0, error }
+  const r = await relerLead(id)
+  return { ...r, pagas: data }
+}
+
 // ---- Histórico ----
 export async function carregarEventos(leadId) {
   const { data, error } = await supabase

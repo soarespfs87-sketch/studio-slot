@@ -64,7 +64,7 @@ Tudo pertence a um Negócio. Um lead fechado vira (ou se liga a) uma Cliente. Um
 | ✅ | **0. Reorganizar a casa** | Telas de sala/reserva escondidas, menu novo, código separado por módulo, Vitest ligado, preview duplo e cores editáveis funcionando |
 | ✅ | **1. Preços (core)** | Base do negócio, pacotes, campanhas temáticas e calculadora rápida salvando no Supabase; testes dos exemplos 3.7 passando |
 | ✅ | **2. Leads** | CRM completo: pipeline, ficha, histórico, follow-up, WhatsApp, perdido com motivo |
-| [ ] | **3. Financeiro** | Lançamentos por grupo da DRE, automatismos, fechar lead (RPC), regra PF/PJ, fluxo de caixa com saldo encadeado; teste do exemplo 5.4 passando |
+| ✅ | **3. Financeiro** | Lançamentos por grupo da DRE, automatismos, fechar lead (RPC), regra PF/PJ, fluxo de caixa com saldo encadeado; teste do exemplo 5.4 passando |
 | [ ] | **4. Clientes + lembretes** | Lead fechado vira cliente (sem duplicar), ficha com família e compras, "o bebê nasceu?", aba Lembretes (aniversários, festa dos filhos, parto, recompra) com WhatsApp pronto |
 | [ ] | **5. Contratos** | Dados pro contrato, modelos com etiquetas, prévia com o que falta, PDF, envio pelo WhatsApp, status |
 | [ ] | **6. Início** | Painel do dia com lembretes, campanhas em andamento, métricas do CRM, checklist de primeiro acesso |

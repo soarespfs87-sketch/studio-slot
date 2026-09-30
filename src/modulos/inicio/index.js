@@ -7,7 +7,7 @@ import { icones } from '../../componentes/icones.js'
 const PARTES = [
   ['precos', 'Preços', 'Descubra quanto cobrar', null],
   ['leads', 'Leads', 'Organize quem pediu orçamento', null],
-  ['financeiro', 'Financeiro', 'Separe o caixa do seu bolso', 'Fase 3'],
+  ['financeiro', 'Financeiro', 'Separe o caixa do seu bolso', null],
 ]
 
 export function render(el, { negocio }) {
