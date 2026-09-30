@@ -16,7 +16,8 @@ Preparado em 30/09/2026. Complementa o `briefing-studioflow-app-fotografos-v2.md
 | Nome | Continua **Studio Slot** (domínio studioslot.app.br mantido). |
 | Público | Fotógrafo autônomo (gestante, newborn, infantil, corporativo, eventos, casamento). |
 | v1 (reserva de sala) | Não há estúdios usando. As tabelas antigas ficam no banco, só somem da interface. A agenda volta depois do teste. |
-| Escopo do teste | Só **CRM + Precificação + Financeiro**. Sem agenda, sem proposta, sem contrato, sem galeria. |
+| Escopo do teste | **CRM (leads + clientes + lembretes) + contratos em PDF + Precificação + Financeiro**. Sem agenda, sem proposta comercial, sem assinatura eletrônica, sem galeria. |
+| Ordem de construção | Preços → Leads → **Financeiro** → **Clientes + lembretes** → **Contratos** → Início (decisão de 30/09/2026) |
 | Planos | **Sem plano gratuito e sem trial.** Um plano só por enquanto: **Pro — R$ 59/mês** (faixa estudada: R$ 49–79) ou **R$ 590/ano** (2 meses de desconto). |
 | Cobrança | Igual à v1: LastLink + `plano_ativo` ligado na mão pelo admin. |
 | Primeira usuária | A cliente fotógrafa da agência, como beta com cortesia durante o teste (não é plano gratuito público). |
@@ -47,13 +48,14 @@ Preparado em 30/09/2026. Complementa o `briefing-studioflow-app-fotografos-v2.md
 
 ## 2. Navegação do app
 
-Menu com 5 itens (celular: barra inferior; computador: lateral):
+Menu com 6 itens (celular: barra inferior; computador: lateral):
 
 1. **Início** — painel do dia
-2. **Leads** — CRM
-3. **Preços** — pacotes, campanhas temáticas e calculadora rápida
-4. **Financeiro** — lançamentos e fluxo de caixa do mês
-5. **Ajustes** — identidade, plano, sair
+2. **Leads** — funil de quem pediu orçamento
+3. **Clientes** — quem já comprou: ficha, família, compras, lembretes e contratos (seções 11 a 13)
+4. **Preços** — pacotes, campanhas temáticas e calculadora rápida
+5. **Financeiro** — lançamentos e fluxo de caixa do mês
+6. **Ajustes** — identidade, dados pro contrato, plano, sair
 
 Login, recuperação de senha, termos, privacidade, tema/identidade e painel da plataforma continuam os da v1.
 
@@ -413,6 +415,7 @@ Primeiro mês de uso, com saldo de partida de R$ 5.000:
 - Follow-ups de hoje e atrasados, com botão de WhatsApp.
 - Leads por etapa (números clicáveis).
 - Mês atual: recebido × previsto e margem líquida até agora.
+- **Lembretes** (seção 12): hoje, esta semana e ações de venda, com botão de WhatsApp.
 - **Campanhas em andamento:** "Natal: 5 de 20 vagas vendidas, faltam 3 pra o cenário se pagar".
 - **Pacotes com preço abaixo do mínimo** (semáforo vermelho), com link pra Preços.
 - Primeiro acesso: **checklist de configuração** (dados gerais → custos fixos → equipamentos → primeiro pacote → saldo de partida → primeiro lead). Sem dados de exemplo: a pessoa usa os números dela desde o primeiro dia.
@@ -479,6 +482,37 @@ lancamentos
   unique (custo_fixo_id, mês do vencimento) -- não duplica custo fixo no mesmo mês
 ```
 
+**Tabelas da Fase 4 e 5 (clientes, lembretes, contratos):**
+
+```
+clientes
+  id, estudio_id, nome, whatsapp (único por negócio), email, instagram, data_nascimento date,
+  cpf (11 dígitos), cep, rua, numero, complemento, bairro, cidade, uf, observacoes,
+  created_at, updated_at
+
+familiares
+  id, estudio_id, cliente_id fk (on delete cascade), nome,
+  parentesco ('filho'|'filha'|'conjuge'|'gestacao'|'outro'),
+  data_nascimento date, data_prevista_parto date   -- gestacao exige data_prevista_parto
+
+leads  + cliente_id fk null                        -- a compra aponta pra cliente
+
+lembretes_feitos
+  id, estudio_id, chave text, feito_em             -- unique (estudio_id, chave)
+
+config_negocio  + lembrete_aniv_dias (3), lembrete_festa_dias (60), lembrete_parto_dias (7),
+                  lembrete_recompra_meses (11),
+                  contratada_nome, contratada_documento, contratada_endereco, foro_cidade
+
+contrato_modelos
+  id, estudio_id, nome, texto, created_at, updated_at
+
+contratos
+  id, estudio_id, cliente_id fk (cascade), lead_id fk null, modelo_id fk null, titulo,
+  texto (cópia fixa do texto final), status ('rascunho'|'enviado'|'assinado'),
+  enviado_em, assinado_em, created_at
+```
+
 **Transação no banco:** fechar negócio (atualizar lead + criar entradas + registrar evento) roda numa função `fechar_lead(...)` (RPC), pra não ficar metade salvo se a internet cair.
 
 ---
@@ -502,19 +536,118 @@ lancamentos
 | **1. Preços** | Base do negócio, pacotes, campanhas temáticas, calculadora rápida, semáforo | Testes dos 3 exemplos da seção 3.7 passam; a cliente beta cadastra os pacotes reais dela |
 | **2. Leads** | Pipeline, ficha, histórico, follow-up, WhatsApp, perdido com motivo | Cadastrar, avançar, perder e reabrir um lead funciona |
 | **3. Financeiro** | Lançamentos por grupo, automatismos, fechar negócio (RPC), regra PF/PJ, fluxo de caixa em cascata com saldo encadeado | Teste do exemplo 5.4 passa; fechar um lead gera as entradas certas; a campanha mostra as vagas vendidas |
-| **4. Início** | Painel, campanhas em andamento, checklist de primeiro acesso, métricas do CRM | Um fotógrafo novo consegue se configurar sozinho, sem ajuda |
+| **4. Clientes + lembretes** | Cliente criada ao fechar (e migração dos fechados), ficha com família e compras, "o bebê nasceu?", lista com aniversariantes, aba Lembretes com antecedências configuráveis | Testes dos exemplos da seção 12 passam; fechar um lead de uma cliente antiga liga à mesma ficha |
+| **5. Contratos** | Dados pro contrato em Ajustes, modelos com etiquetas, prévia com o que falta, cópia fixa, PDF, envio pelo WhatsApp, status | Gero o contrato de uma compra, baixo o PDF e todos os campos vêm preenchidos; `{valor_extenso}` testado |
+| **6. Início** | Painel, lembretes, campanhas em andamento, checklist de primeiro acesso, métricas do CRM | Um fotógrafo novo consegue se configurar sozinho, sem ajuda |
 | **F. (opcional)** | Formulário público de lead (`studioslot.app.br/<slug>/contato`) com as perguntas do formulário conversacional do site da cliente, gravando direto como lead `Novo` via RPC | Lead enviado pelo site aparece no CRM |
 
-Depois da Fase 4: começam as 6 semanas de teste.
+Depois da Fase 6 (e da Fase Final, que inclui a atualização da Política de Privacidade e dos Termos pra dados de clientes e crianças): começam as 6 semanas de teste.
 
 ---
 
 ## 10. Fora do escopo do teste
 
 - Agenda (volta na próxima etapa se o teste passar)
-- Propostas comerciais · contratos com assinatura · galeria · portal do cliente · pagamento com split
+- Propostas comerciais · **assinatura eletrônica** (ZapSign/Clicksign) · link de aceite online · anexar o contrato assinado · galeria · portal do cliente · pagamento com split
+- CEP que preenche o endereço sozinho · mensagens de lembrete editáveis por tipo
 - IA de atendimento · notificações por e-mail/WhatsApp · mais de um usuário por conta · inglês/dólar · integração bancária automática
 - **Vindos da planilha, ficam pra Versão 2:**
   - Clube de Memórias (assinatura em camadas Pocket/Standard/Luxo)
   - Catálogo de fornecedores de álbum com comparação (RED LAB, Silcolor, Inova, LolyBel, Casarte)
   - Construção de cenários anuais (pessimista/provável/otimista)
+
+---
+
+## 11. Módulo Clientes (depois que o lead compra)
+
+Pedido da fotógrafa em 30/09/2026. É o que gera **venda repetida** (gestante → newborn → acompanhamento → smash the cake → aniversário) e alimenta o contrato.
+
+### 11.1 Como a cliente nasce
+
+- **Automático ao fechar um lead** (a função `fechar_lead` passa a fazer isso):
+  - se já existe cliente com o mesmo WhatsApp no negócio, o lead é ligado a ela (**recompra**, sem duplicar);
+  - senão, cria a cliente com nome, WhatsApp, e-mail e Instagram do lead.
+- **Na mão:** "+ Nova cliente", pra quem comprou antes de usar o app.
+- **Na migração da Fase 4:** os leads que já estavam fechados viram clientes, pela mesma regra.
+- Depois de fechar, a ficha do lead mostra "Completar cadastro da cliente →".
+
+### 11.2 Ficha da cliente
+
+| Bloco | Campos |
+|---|---|
+| Dados pessoais | nome *, WhatsApp * (único no negócio), e-mail, Instagram, **data de nascimento**, observações |
+| Pro contrato | CPF (validado pelos dígitos), endereço: CEP, rua, número, complemento, bairro, cidade, UF |
+| **Família** | lista de pessoas: nome, parentesco (filho, filha, cônjuge, **bebê a caminho**, outro), data de nascimento. Bebê a caminho tem **data prevista do parto** no lugar do nascimento |
+| **Compras** | cada lead fechado ligado a ela: pacote/campanha, valor, data da sessão. Mostra **total já comprado** e **data da última compra** (a data de sessão mais recente) |
+| Contratos | os contratos gerados pra ela (seção 13) |
+| Lembretes | os lembretes dela que estão ativos (seção 12) |
+
+- **"O bebê nasceu?"**: no "bebê a caminho", um botão pede o nome e a data de nascimento e transforma em filho ou filha.
+- **Lista de clientes:** busca por nome ou WhatsApp, filtro "aniversariantes do mês" e ordem por última compra.
+
+**Idade:** calculada na data do aniversário. Quem nasceu em 29/02 faz aniversário em 28/02 nos anos que não são bissextos.
+
+## 12. Lembretes (aniversários, parto, festa, recompra)
+
+Os lembretes **não são guardados**: o app calcula a partir das datas da ficha. Só o "Feito ✓" é guardado, pra o lembrete sumir e voltar no ano seguinte. Cada lembrete tem um botão de WhatsApp com mensagem pronta (a pessoa ajusta antes de enviar).
+
+| Lembrete | Aparece de … até … | Mensagem sugerida / ação |
+|---|---|---|
+| Aniversário da cliente | 3 dias antes → 7 dias depois | "Feliz aniversário, {nome}! 🎉" |
+| Aniversário do filho | 3 dias antes → 7 dias depois | "Hoje o {filho} faz {idade}! 🎈" |
+| **Festa do filho chegando (venda)** | **60 dias antes** do aniversário → véspera | Ação de venda: "Faltam 2 meses pro {idade} do {filho}. Que tal um smash the cake / cobertura da festa?" |
+| **Parto chegando** | 7 dias antes da data prevista → 21 dias depois | Antes: mensagem carinhosa. Depois da data: "O bebê já chegou? 💛", com a oferta de newborn |
+| **Recompra** | 11 meses depois da última compra → 60 dias depois disso | "Faz quase um ano do seu ensaio…". Some quando há uma compra nova |
+
+- As antecedências (3 dias, 60 dias, 7 dias, 11 meses) são **configuráveis** na aba Lembretes. Valor 0 desliga aquele tipo.
+- **Chave de "feito":** tipo + pessoa + ano (na recompra, tipo + data da última compra). Assim o lembrete não volta no mesmo ano.
+- **Onde aparecem:** aba **Lembretes** em Clientes (Fase 4), na ficha da cliente e no **Início** (Fase 6), agrupados em "Hoje", "Esta semana" e "Ações de venda".
+
+**Exemplos de referência (viram testes; "hoje" = 30/09/2026):**
+
+| Situação | Esperado |
+|---|---|
+| Cliente nascida em 02/10/1990 | aparece "Aniversário em 2 dias · faz 36 anos" |
+| Filho Theo nascido em 29/11/2025 | aparece "Festa: 1 aninho do Theo em 60 dias" (hoje é exatamente 60 dias antes) |
+| Bebê a caminho, parto previsto em 05/10/2026 | aparece "Parto previsto em 5 dias" |
+| Última compra (sessão) em 20/10/2025 | aparece recompra (11 meses = 20/09/2026, dentro dos 60 dias) |
+| Nascida em 29/02/2000, olhando 2027 | aniversário em 28/02/2027 |
+| Aniversário da cliente marcado "feito" em 2026 | some em 2026 e volta em 2027 |
+
+## 13. Contratos (PDF personalizado)
+
+### 13.1 Modelo do contrato
+
+- A fotógrafa **cola o texto do contrato dela** uma vez (pode ter vários modelos: ensaio, casamento, campanha) e marca os campos com etiquetas.
+- O app traz um **modelo inicial de exemplo**, com o aviso "revise com seu advogado antes de usar". O app não dá orientação jurídica.
+- **Etiquetas disponíveis** (botões que inserem a etiqueta no texto):
+
+| Etiqueta | Vem de |
+|---|---|
+| `{cliente_nome}` `{cliente_cpf}` `{cliente_endereco}` `{cliente_nascimento}` `{cliente_whatsapp}` `{cliente_email}` | ficha da cliente |
+| `{pacote}` `{entregaveis}` `{valor}` `{valor_extenso}` `{data_sessao}` | a compra (lead fechado) + Preços |
+| `{forma_pagamento}` | condição de pagamento do fechamento (Fase 3), ex.: "sinal de R$ 765,00 até 15/10/2026 e saldo de R$ 1.785,00 até 10/11/2026" |
+| `{contratada_nome}` `{contratada_documento}` `{contratada_endereco}` `{foro_cidade}` | Ajustes › Dados pro contrato (novos campos do negócio) |
+| `{data_hoje}` | data da geração, por extenso ("30 de setembro de 2026") |
+
+- `{valor_extenso}`: "dois mil, quinhentos e cinquenta reais". É uma função testada.
+
+### 13.2 Gerar e enviar
+
+1. Na ficha da cliente, "Gerar contrato": escolhe a compra e o modelo.
+2. **Prévia preenchida.** Cada etiqueta sem dado aparece destacada ("⚠ falta: CPF da cliente"), com link pra completar o cadastro. Dá pra gerar mesmo assim, mas o aviso fica.
+3. O texto pode ser ajustado só pra esse contrato antes de salvar.
+4. **"Salvar e baixar PDF"** guarda uma **cópia fixa** do texto final (mudar o modelo depois não altera contratos já gerados) e abre o PDF (impressão do navegador, com layout de documento: cabeçalho com o nome do negócio, margens, páginas numeradas).
+5. **"Enviar pelo WhatsApp"** abre a conversa com "Oi, {nome}! Segue o contrato do seu ensaio. 💛". O PDF é anexado à mão. O status vira **enviado**.
+6. Quando ela devolver assinado, a fotógrafa marca **assinado** (com a data).
+
+Status: rascunho → enviado → assinado. Um contrato assinado não pode mais ser editado, só visto e baixado.
+
+### 13.3 LGPD (dados de clientes e de crianças)
+
+- Só se pede o que o contrato e os lembretes usam. CPF e endereço são opcionais até a hora de gerar o contrato.
+- Dados de filhos: só nome, parentesco e datas. Nada de foto nem documento.
+- A fotógrafa é a **controladora** dos dados dos clientes dela; o Studio Slot é **operador**. A Política de Privacidade e os Termos são atualizados na Fase Final pra dizer isso.
+- Apagar a cliente apaga família, lembretes feitos e contratos dela.
+
+---

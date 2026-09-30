@@ -18,13 +18,15 @@ prompts de cada fase em `PROMPTS.md`.
 - [x] Fase 0 — Reorganizar a casa: menu de 5 itens (Início, Leads, Preços, Financeiro,
       Ajustes), código separado por módulo, Vitest, cadastro só de fotógrafo
 - [x] Fase 1 — Preços: base do negócio, pacotes, campanhas temáticas, calculadora rápida
-- [ ] Fase 2 — Leads · [ ] Fase 3 — Financeiro · [ ] Fase 4 — Início · [ ] Final — Publicar
+- [x] Fase 2 — Leads: funil, ficha, follow-up, WhatsApp, fechar/perder/reabrir, histórico
+- [ ] Fase 3 — Financeiro · [ ] Fase 4 — Clientes + lembretes · [ ] Fase 5 — Contratos · [ ] Fase 6 — Início · [ ] Final — Publicar
 
 ## Onde está cada coisa (v2)
 - `src/portao.js` — decide o que mostrar: login → "nome do seu negócio" → "falta liberar a assinatura" → app
 - `src/app.js` — o menu e a troca de telas (endereço `#/leads`, `#/precos`…)
 - `src/modulos/<parte>/index.js` — cada parte do app (`inicio`, `leads`, `precos`, `financeiro`, `ajustes`, `plataforma`)
 - `src/negocio.js` — nome, marca e cores do negócio (tabela `estudios`)
+- `src/modulos/leads/` — `funil.js`, `ficha.js`, `formulario.js`, `regras.js` (com testes), `dados.js` (banco)
 - `src/modulos/precos/` — `base.js`, `servicos.js` (pacotes e campanhas), `calculadora.js`, `dados.js` (banco)
 - `banco/` — o SQL de cada fase, como registro do que foi criado no Supabase
 - `src/calculos.js` — todas as contas (com testes em `calculos.test.js`); dinheiro em centavos

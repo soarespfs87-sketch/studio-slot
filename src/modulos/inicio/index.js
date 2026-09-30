@@ -6,7 +6,7 @@ import { icones } from '../../componentes/icones.js'
 
 const PARTES = [
   ['precos', 'Preços', 'Descubra quanto cobrar', null],
-  ['leads', 'Leads', 'Organize quem pediu orçamento', 'Fase 2'],
+  ['leads', 'Leads', 'Organize quem pediu orçamento', null],
   ['financeiro', 'Financeiro', 'Separe o caixa do seu bolso', 'Fase 3'],
 ]
 
@@ -17,7 +17,7 @@ export function render(el, { negocio }) {
       <h1 class="titulo-grande">${esc(negocio.nome)}</h1>
       <p class="modulo-intro">
         Aqui vai ficar o resumo do seu dia: follow-ups, leads por etapa e como está o mês.
-        Enquanto isso, comece pelos seus preços:
+        Enquanto isso, comece por aqui:
       </p>
       <div class="inicio-partes">
         ${PARTES.map(

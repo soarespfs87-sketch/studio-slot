@@ -107,11 +107,59 @@ Está pronto quando:
 
 ---
 
-## Prompt — Fase 4: Início
+## Prompt — Fase 4: Clientes + lembretes
 
-Leia o PLANO.md e o briefing (seções 4.5 e 6). Já concluí as Fases 0 a 3. Agora vamos construir SÓ a Fase 4: o painel do Início.
+Leia o PLANO.md e o briefing (seções 11, 12 e 7). Já concluí as Fases 0 a 3. Agora vamos construir SÓ a Fase 4: clientes e lembretes.
 
 Nesta fase:
+- Migração: tabelas `clientes`, `familiares`, `lembretes_feitos`, coluna `leads.cliente_id` e antecedências em `config_negocio`, com RLS "só o dono". A função `fechar_lead` passa a criar a cliente (ou ligar à existente pelo WhatsApp). Os leads que já estão fechados viram clientes na migração.
+- Novo item "Clientes" no menu (6 itens), com as abas Clientes e Lembretes.
+- Ficha: dados pessoais, dados pro contrato (CPF validado, endereço), família (filhos, cônjuge, bebê a caminho com data do parto, botão "O bebê nasceu?"), compras com total e última compra, observações.
+- Lista com busca, "aniversariantes do mês" e ordem por última compra. "+ Nova cliente" pra quem comprou antes do app.
+- Lembretes calculados das datas (seção 12), cada um com WhatsApp e mensagem pronta e "Feito ✓", mais as antecedências configuráveis. Regras em funções puras + testes com os exemplos da seção 12.
+- Ficha do lead fechado: link "Completar cadastro da cliente".
+
+Identidade visual: tema do fotógrafo, mobile-first.
+Não faça ainda: contratos, painel do Início.
+Vá me explicando em linguagem simples e me avise quando eu puder testar.
+
+Está pronto quando:
+- [ ] `npm test` passa com os exemplos de lembrete (aniversário em 2 dias, festa do Theo em 60 dias, parto em 5 dias, recompra, 29/02)
+- [ ] Fecho um lead e a cliente aparece com a compra; fecho outro lead com o mesmo WhatsApp e ele entra na mesma ficha
+- [ ] Cadastro um bebê a caminho e o lembrete do parto aparece perto da data; clico "O bebê nasceu?" e vira filho
+- [ ] Marco um lembrete como feito e ele some
+
+---
+
+## Prompt — Fase 5: Contratos
+
+Leia o PLANO.md e o briefing (seção 13 e 7). Já concluí as Fases 0 a 4. Agora vamos construir SÓ a Fase 5: contratos em PDF.
+
+Nesta fase:
+- Migração: `contrato_modelos`, `contratos` e os campos de "dados pro contrato" em `config_negocio`, com RLS.
+- Ajustes › Dados pro contrato (seu nome/razão social, CPF/CNPJ, endereço, cidade do foro).
+- Modelos: editor de texto com botões que inserem as etiquetas; modelo inicial de exemplo com o aviso "revise com seu advogado".
+- Gerar na ficha da cliente: escolher compra e modelo → prévia preenchida com ⚠ no que falta → ajuste opcional → "Salvar e baixar PDF" (guarda cópia fixa; PDF pela impressão do navegador com layout de documento) → "Enviar pelo WhatsApp" (status enviado) → marcar assinado (trava a edição).
+- `{valor_extenso}` e `{data_hoje}` por extenso em funções puras testadas.
+
+Identidade visual: tema do fotógrafo na tela; o PDF é sóbrio (preto e branco, nome do negócio no cabeçalho).
+Não faça ainda: assinatura eletrônica, link de aceite, painel do Início.
+Vá me explicando em linguagem simples e me avise quando eu puder testar.
+
+Está pronto quando:
+- [ ] `npm test` passa: 2.550,00 → "dois mil, quinhentos e cinquenta reais"; 1.000.001,50 por extenso
+- [ ] Gero o contrato de uma compra e todos os campos vêm preenchidos; sem CPF, aparece o aviso do que falta
+- [ ] Baixo o PDF e ele sai com cara de documento (margens, páginas numeradas)
+- [ ] Mudo o modelo e o contrato já gerado continua igual
+
+---
+
+## Prompt — Fase 6: Início
+
+Leia o PLANO.md e o briefing (seções 4.5, 6 e 12). Já concluí as Fases 0 a 5. Agora vamos construir SÓ a Fase 6: o painel do Início.
+
+Nesta fase:
+- Lembretes da seção 12 agrupados em Hoje / Esta semana / Ações de venda, com WhatsApp e "Feito ✓".
 - Follow-ups de hoje e atrasados (com WhatsApp), leads por etapa (clicáveis), recebido × previsto e margem líquida do mês, campanhas em andamento (vagas vendidas e quantas faltam pro cenário se pagar), pacotes com semáforo vermelho.
 - Métricas do CRM do mês: leads novos, taxa de conversão (fechados ÷ fechados + perdidos), valor fechado, motivo de perda mais comum.
 - Checklist de primeiro acesso: dados gerais → custos fixos → equipamentos → primeiro pacote → saldo de partida → primeiro lead; some quando tudo estiver feito.
@@ -129,14 +177,15 @@ Está pronto quando:
 
 ## Prompt — Fase Final: Publicar
 
-Leia o PLANO.md. Já concluí as Fases 0 a 4. Agora vamos publicar a v2.
+Leia o PLANO.md. Já concluí as Fases 0 a 6. Agora vamos publicar a v2.
 
 Use a skill do back-end ("vamos construir o back-end do meu app") pra revisar a segurança do banco: RLS de todas as tabelas novas, advisors do Supabase sem alerta de segurança, backup (`npm run salvar`) antes de subir.
 
 Nesta fase:
 - Tela de assinatura (portão) com o plano Pro R$ 59/mês ou R$ 590/ano e o link do LastLink; sem plano gratuito.
 - Painel da plataforma mostrando os planos novos.
-- Atualizar textos de termos/privacidade e o manifesto do PWA pro novo propósito do app.
+- Atualizar termos/privacidade pro novo propósito do app: o fotógrafo é controlador dos dados dos clientes dele (incluindo CPF e dados de crianças) e o Studio Slot é operador (briefing 13.3). Atualizar o manifesto do PWA.
+- Avaliar o plano pago do Supabase (o gratuito pausa o banco sem uso).
 - Deploy no Netlify (studioslot.app.br) e teste instalando no celular.
 - Criar as contas da cliente beta e dos 3–5 fotógrafos do teste.
 
