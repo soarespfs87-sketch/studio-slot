@@ -4,8 +4,8 @@
 //  As fotos das salas (arquivos em /fotos/…) são reenviadas pro armário.
 // ────────────────────────────────────────────────────────────────
 
-import { supabase } from './supabase.js'
-import { paraSlug } from './auth.js'
+import { supabase } from '../supabase.js'
+import { paraSlug } from '../auth.js'
 import { getConfig, getSalas, getExtras } from './dados.js'
 
 // Baixa uma imagem servida pelo próprio app e reenvia pro Storage.

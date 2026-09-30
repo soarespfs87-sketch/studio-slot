@@ -1,6 +1,6 @@
 // Tela: Extras — adicionais da reserva, com total ao vivo
 
-import { brl } from '../format.js'
+import { brl } from '../../format.js'
 import { barraContador } from './parciais.js'
 
 // selecionados: mapa { [extraId]: quantidade }

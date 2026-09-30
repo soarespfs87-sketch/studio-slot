@@ -1,6 +1,6 @@
 // Tela: Agenda da sala — escolher o dia e um horário livre
 
-import { brl, dataBR, dataCurta, hojeISO } from '../format.js'
+import { brl, dataBR, dataCurta, hojeISO } from '../../format.js'
 import { valorDoSlot, faixaDoDia, NOME_FAIXA } from '../agenda.js'
 
 export function slotBotao(slot) {

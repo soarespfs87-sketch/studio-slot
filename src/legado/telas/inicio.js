@@ -1,8 +1,8 @@
 // Tela: Início do estúdio — identidade + filtro de data + lista de salas
 
-import { brl, dataCurta, hojeISO } from '../format.js'
+import { brl, dataCurta, hojeISO } from '../../format.js'
 import { precoHora } from '../agenda.js'
-import { aperture, capaSala, rodapeStudioSlot } from '../ui.js'
+import { aperture, capaSala, rodapeStudioSlot } from '../../ui.js'
 
 function cardSala(sala, dataFiltro) {
   const sazonal =

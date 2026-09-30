@@ -10,8 +10,8 @@
 // ────────────────────────────────────────────────────────────────
 
 import { read, write, novoId } from './db.js'
-import { estudioConfig as configPadrao } from '../estudio.config.js'
-import { supabase } from './supabase.js'
+import { estudioConfig as configPadrao } from './estudio.config.js'
+import { supabase } from '../supabase.js'
 
 export { novoId }
 

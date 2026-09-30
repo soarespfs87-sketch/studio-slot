@@ -1,7 +1,7 @@
 // Telas do fluxo de reserva: dados + termo, pagamento por Pix
 // (o dono confirma o recebimento depois) e "tempo esgotado".
 
-import { brl, dataBR } from '../format.js'
+import { brl, dataBR } from '../../format.js'
 import { barraContador } from './parciais.js'
 
 function listaExtrasResumo(extras) {

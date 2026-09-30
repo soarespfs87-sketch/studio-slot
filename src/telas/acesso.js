@@ -1,6 +1,6 @@
-// Telas de acesso: entrar e criar conta. Estúdios e fotógrafos, mesmo login.
+// Telas de acesso: entrar, criar conta, recuperar senha, criar o negócio.
 
-import { rodapeStudioSlot, DOMINIO } from '../ui.js'
+import { rodapeStudioSlot } from '../ui.js'
 
 function moldura(conteudo) {
   return `
@@ -19,7 +19,7 @@ function moldura(conteudo) {
 
 export function telaEntrar({ erro } = {}) {
   return moldura(`
-    <h1 class="titulo-grande acesso-frase">Tudo pronto para sua próxima reserva.</h1>
+    <h1 class="titulo-grande acesso-frase">Seu negócio de fotografia, no azul.</h1>
     ${erro ? `<p class="form-erro">${erro}</p>` : ''}
     <form id="form-entrar" class="dono-form">
       <label class="campo"><span>E-mail</span>
@@ -72,30 +72,17 @@ export function telaNovaSenha({ erro } = {}) {
   `)
 }
 
-export function telaCadastro({ erro, tipo = 'fotografo' } = {}) {
-  const marc = (t) => (tipo === t ? 'tipo-op-on' : '')
-  const chk = (t) => (tipo === t ? 'checked' : '')
+export function telaCadastro({ erro } = {}) {
   return moldura(`
     <h1 class="titulo-grande">Criar conta</h1>
+    <p class="acesso-sub">Preços, leads e financeiro do seu negócio de fotografia num lugar só.</p>
     ${erro ? `<p class="form-erro">${erro}</p>` : ''}
     <form id="form-cadastro" class="dono-form">
-      <div class="tipo-escolha">
-        <label class="tipo-op ${marc('fotografo')}">
-          <input type="radio" name="tipo" value="fotografo" ${chk('fotografo')} />
-          <strong>Sou fotógrafo</strong><span>quero reservar salas</span>
-        </label>
-        <label class="tipo-op ${marc('dono')}">
-          <input type="radio" name="tipo" value="dono" ${chk('dono')} />
-          <strong>Tenho um estúdio</strong><span>quero receber reservas</span>
-        </label>
-      </div>
-      <label class="campo campo-estudio" ${tipo === 'dono' ? '' : 'hidden'}>
-        <span>Nome do estúdio</span>
-        <input type="text" id="c-estudio" placeholder="Ex.: Estúdio Lúmen" />
-      </label>
+      <label class="campo"><span>Nome do seu negócio</span>
+        <input type="text" id="c-negocio" placeholder="Ex.: Ana Lima Fotografia" required /></label>
       <label class="campo"><span>Seu nome</span>
         <input type="text" id="c-nome" autocomplete="name" required /></label>
-      <label class="campo"><span>Telefone</span>
+      <label class="campo"><span>WhatsApp</span>
         <input type="tel" id="c-tel" autocomplete="tel" placeholder="(11) 90000-0000" /></label>
       <label class="campo"><span>E-mail</span>
         <input type="email" id="c-email" autocomplete="email" required /></label>
@@ -107,68 +94,30 @@ export function telaCadastro({ erro, tipo = 'fotografo' } = {}) {
   `)
 }
 
-// Fotógrafo abriu o app sem link de estúdio (e nunca abriu nenhum).
-export function telaSemEstudio() {
+// Conta sem negócio (ex.: conta antiga da v1): dá um nome pro negócio.
+export function telaCriarNegocio({ erro } = {}) {
   return moldura(`
-    <h1 class="titulo-grande">Abra pelo link do estúdio</h1>
-    <p class="acesso-sub">
-      Este app é personalizado para cada estúdio. Use o link que o estúdio
-      te enviou — ou instale o app a partir dele.
-    </p>
-    <form id="form-slug" class="dono-form">
-      <label class="campo">
-        <span>Tem o endereço do estúdio?</span>
-        <div class="endereco-linha">
-          <span>${DOMINIO}/</span>
-          <input type="text" id="s-slug" placeholder="nome-do-estudio" />
-        </div>
-      </label>
-      <button class="botao botao-grande" type="submit">Abrir estúdio</button>
+    <h1 class="titulo-grande">Qual é o nome do seu negócio?</h1>
+    <p class="acesso-sub">É o nome que aparece no topo do app. Dá pra trocar depois em Ajustes.</p>
+    ${erro ? `<p class="form-erro">${erro}</p>` : ''}
+    <form id="form-negocio" class="dono-form">
+      <label class="campo"><span>Nome do negócio</span>
+        <input type="text" id="n-nome" placeholder="Ex.: Ana Lima Fotografia" required /></label>
+      <button class="botao botao-grande" type="submit">Continuar</button>
     </form>
     <button class="link-troca" data-acao="sair">Sair</button>
   `)
 }
 
-// Fotógrafo escolhe em qual estúdio quer reservar.
-export function telaEscolherEstudio({ estudios, ehAdmin }) {
-  return `
-    <div class="reservar-corpo">
-      <h1 class="titulo-grande">Escolha um estúdio</h1>
-      <p class="detalhe-desc">Onde você quer reservar?</p>
-
-      <div class="lista-reservas">
-        ${
-          estudios.length
-            ? estudios
-                .map(
-                  (e) => `
-              <button class="card-reserva" data-estudio-slug="${e.slug}">
-                <div class="cr-topo"><span class="cr-sala">${e.nome}</span></div>
-                <p class="cr-quando">${DOMINIO}/${e.slug}</p>
-              </button>`,
-                )
-                .join('')
-            : '<p class="vazio">Nenhum estúdio disponível ainda.</p>'
-        }
-      </div>
-
-      <div class="rodape-links" style="margin-top: 22px">
-        ${ehAdmin ? '<button class="link-dono" data-ir="plataforma">Painel da plataforma</button>' : ''}
-        <button class="link-dono" data-acao="sair">Sair</button>
-      </div>
-    </div>`
-}
-
-// Estúdio cadastrado, mas ainda sem o plano liberado pela plataforma.
+// Conta criada, mas a assinatura ainda não foi liberada pela plataforma.
 export function telaAguardando({ estudio }) {
   return moldura(`
     <div class="feito">
       <div class="feito-check feito-neutro">&#8987;</div>
-      <h1 class="titulo-grande">Estúdio em análise</h1>
-      <p>O <strong>${estudio.nome}</strong> foi cadastrado no endereço
-         <strong>${DOMINIO}/${estudio.slug}</strong> e está aguardando a
-         liberação da plataforma (depois da confirmação do plano).</p>
-      <p class="acesso-sub">Assim que liberar, seu painel abre aqui.</p>
+      <h1 class="titulo-grande">Falta liberar sua assinatura</h1>
+      <p>A conta do <strong>${estudio.nome}</strong> foi criada e está aguardando a
+         liberação do plano (assim que o pagamento for confirmado).</p>
+      <p class="acesso-sub">Assim que liberar, o app abre aqui.</p>
       <div class="rodape-links" style="margin-top: 20px">
         <button class="link-dono" data-acao="recarregar">Já foi liberado? Recarregar</button>
         <button class="link-dono" data-acao="sair">Sair</button>

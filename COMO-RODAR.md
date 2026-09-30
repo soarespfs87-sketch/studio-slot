@@ -9,38 +9,35 @@ Abra no navegador:
 - App: http://localhost:5173/
 - Preview celular + computador: http://localhost:5173/preview.html
 
-Para recomeçar os dados do zero: abra o Console do navegador (F12) e rode
-`localStorage.clear()` e recarregue.
+Testes das contas: `npm test`
 
-## Onde está cada coisa
-- `estudio.config.js` — identidade INICIAL do estúdio; a partir da Fase 5 o dono edita tudo no Painel (fica na chave `config` do navegador)
-- `src/seed.js` — dados de exemplo (salas, extras, fotos)
-- `public/fotos/` — fotos de exemplo das salas (ficção; o dono troca no Painel)
-- `src/dados.js` — leitura/escrita no navegador (inclui `getConfig`/`setConfig`, `salvarSala`, `salvarExtra`)
-- `src/agenda.js` — faixas de preço (útil/fds/feriado), geração dos horários, temporada e buffer
-- `src/reserva.js` — regras de remarcar/cancelar (prazos de 48h e 72h, taxa)
-- `src/app.js` — controla qual tela aparece
-- `src/telas/` — cada tela do app (`minhas.js` = Minha Reserva, `dono.js` = Painel do Dono)
+## v2 — app de gestão pro fotógrafo (em construção)
+Plano em `PLANO.md`, regras em `briefing-v2-mvp-crm-precificacao-financeiro.md`,
+prompts de cada fase em `PROMPTS.md`.
 
-## Painel do dono
-Link "Área do dono" no rodapé do início. De lá dá pra:
-- **Resumo do estúdio** — sessões e faturamento de hoje, lista das sessões do dia,
-  faturamento/sessões/horas/ticket médio, % de reservas com extra e barra de
-  ocupação por sala. O bloco do período tem botões **Este mês / Mês passado /
-  7 dias**; a ocupação desconta feriados e dias que ainda não chegaram. Botão
-  **Atualizar** recarrega os números do banco.
-- **Agenda do estúdio** — calendário do mês inteiro: cada dia mostra se está
-  livre / parcial / cheio (e quantos horários sobram), navegação entre meses.
-  Toque num dia para ver os horários sala por sala — quem reservou, o status
-  (aguardando Pix / segurando), preparo (buffer) e bloqueios.
-- **Salas** — criar/editar/excluir, ativar/desativar, definir fotos, tipo (fixa/sazonal),
-  janela de temporada, buffer, duração do slot e **preço em 3 faixas** (dia útil / fim de semana / feriado)
-- **Extras** — criar/editar/excluir, valor e em quais salas aparece
-- **Identidade** — nome, **logo no topo** + **ícone do app no celular** (viram o favicon/apple-touch-icon),
-  descrição, cores (tema muda na hora), horário, feriados, regras, política, contato,
-  **prazos de remarcação/cancelamento e a taxa** (antes ficavam fixos no código)
+- [x] Fase 0 — Reorganizar a casa: menu de 5 itens (Início, Leads, Preços, Financeiro,
+      Ajustes), código separado por módulo, Vitest, cadastro só de fotógrafo
+- [x] Fase 1 — Preços: base do negócio, pacotes, campanhas temáticas, calculadora rápida
+- [ ] Fase 2 — Leads · [ ] Fase 3 — Financeiro · [ ] Fase 4 — Início · [ ] Final — Publicar
 
-## Status das fases
+## Onde está cada coisa (v2)
+- `src/portao.js` — decide o que mostrar: login → "nome do seu negócio" → "falta liberar a assinatura" → app
+- `src/app.js` — o menu e a troca de telas (endereço `#/leads`, `#/precos`…)
+- `src/modulos/<parte>/index.js` — cada parte do app (`inicio`, `leads`, `precos`, `financeiro`, `ajustes`, `plataforma`)
+- `src/negocio.js` — nome, marca e cores do negócio (tabela `estudios`)
+- `src/modulos/precos/` — `base.js`, `servicos.js` (pacotes e campanhas), `calculadora.js`, `dados.js` (banco)
+- `banco/` — o SQL de cada fase, como registro do que foi criado no Supabase
+- `src/calculos.js` — todas as contas (com testes em `calculos.test.js`); dinheiro em centavos
+- `src/componentes/` — campos de formulário, ícones, estado "em breve"
+- `src/styles.css` — cores do semáforo (`--sinal-*`) são fixas, não seguem o tema
+- `src/legado/` — o app de reserva de sala da v1, guardado pra quando a agenda voltar (fora do app)
+- Painel da plataforma (admin): Ajustes → "Painel da plataforma"
+
+---
+
+# Histórico da v1 (reserva de sala — guardada em src/legado/)
+
+## Status das fases (v1)
 - [x] Fase 0 — Setup + identidade + preview duplo
 - [x] Fase 1 — Core: ver a sala, agenda, travar horário 10 min, aceite do termo
 - [x] Fase 2 — Extras + pagamento simulado + confirmação
@@ -77,7 +74,7 @@ Link "Área do dono" no rodapé do início. De lá dá pra:
       o `plano_ativo` na mão conforme o pagamento. Automação por webhook fica
       pra quando tiver volume.
 
-## Ainda pra fazer (backlog do MVP)
+## Backlog da v1
 - Notificações automáticas por e-mail (confirmação + lembrete 24h/2h) — adiado
 - Gateway de pagamento real da RESERVA (Pix + cartão) — hoje é Pix manual
 - Webhook do LastLink → liga/desliga `plano_ativo` sozinho (fase 2 da monetização)

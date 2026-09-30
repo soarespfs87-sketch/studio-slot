@@ -2,7 +2,7 @@
 // O estúdio cadastra salas, define preços em faixas, cria extras e
 // ajusta a própria identidade. Tudo fica salvo no navegador (localStorage).
 
-import { brl } from '../format.js'
+import { brl } from '../../format.js'
 import { precosDaSala } from '../agenda.js'
 
 // ---- pedacinhos de formulário reaproveitados ----

@@ -1,8 +1,9 @@
 // ────────────────────────────────────────────────────────────────
 //  Portão de entrada:
-//   sem login          -> tela de acesso (entrar / criar conta)
-//   dono sem plano ativo -> tela "estúdio em análise"
-//   resto              -> o app normal (app.js)
+//   sem login              -> tela de acesso (entrar / criar conta)
+//   logado sem negócio     -> "qual é o nome do seu negócio?"
+//   negócio sem plano ativo -> tela "falta liberar sua assinatura"
+//   resto (e admin)        -> o app (app.js)
 // ────────────────────────────────────────────────────────────────
 
 import {
@@ -23,6 +24,7 @@ import {
   telaAguardando,
   telaEsqueciSenha,
   telaNovaSenha,
+  telaCriarNegocio,
 } from './telas/acesso.js'
 import { telaPrivacidade, telaTermos } from './telas/legal.js'
 import { iniciar } from './app.js'
@@ -61,9 +63,9 @@ export async function montarPortao() {
   // admin da plataforma entra sempre (tem o Painel da Plataforma)
   if (await souAdmin()) return iniciar()
 
-  // dono de estúdio ainda pendente?
   const est = await meuEstudio()
-  if (est && !est.plano_ativo) return mostrarAguardando(est)
+  if (!est) return mostrarCriarNegocio()
+  if (!est.plano_ativo) return mostrarAguardando(est)
 
   return iniciar()
 }
@@ -73,6 +75,23 @@ function mostrarAguardando(est) {
   app.querySelector('[data-acao="recarregar"]').addEventListener('click', () => location.reload())
   app.querySelector('[data-acao="sair"]').addEventListener('click', async () => {
     await sair()
+    location.reload()
+  })
+}
+
+function mostrarCriarNegocio(dados = {}) {
+  app.innerHTML = telaCriarNegocio(dados)
+  app.querySelector('[data-acao="sair"]').addEventListener('click', async () => {
+    await sair()
+    location.reload()
+  })
+  app.querySelector('#form-negocio').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const nome = app.querySelector('#n-nome').value.trim()
+    if (nome.length < 2) return mostrarCriarNegocio({ erro: 'Dê um nome ao seu negócio.' })
+    e.target.querySelector('button').disabled = true
+    const { error } = await criarMeuEstudio(nome)
+    if (error) return mostrarCriarNegocio({ erro: 'Não deu pra criar: ' + (error.message || '') })
     location.reload()
   })
 }
@@ -135,25 +154,12 @@ function mostrarNovaSenha(dados = {}) {
 }
 
 function ligarCadastro(fCad) {
-  const campoEstudio = fCad.querySelector('.campo-estudio')
-
-  fCad.querySelectorAll('input[name="tipo"]').forEach((r) =>
-    r.addEventListener('change', () => {
-      fCad.querySelectorAll('.tipo-op').forEach((op) =>
-        op.classList.toggle('tipo-op-on', op.querySelector('input').checked),
-      )
-      campoEstudio.hidden = fCad.querySelector('input[name="tipo"]:checked').value !== 'dono'
-    }),
-  )
-
   fCad.addEventListener('submit', async (e) => {
     e.preventDefault()
     const btn = fCad.querySelector('button[type="submit"]')
-    const tipo = fCad.querySelector('input[name="tipo"]:checked').value
-    const nomeEstudio = fCad.querySelector('#c-estudio')?.value.trim() || ''
-
-    if (tipo === 'dono' && nomeEstudio.length < 2) {
-      return mostrarAcesso('cadastro', { erro: 'Dê um nome ao seu estúdio.', tipo })
+    const nomeNegocio = fCad.querySelector('#c-negocio').value.trim()
+    if (nomeNegocio.length < 2) {
+      return mostrarAcesso('cadastro', { erro: 'Dê um nome ao seu negócio.' })
     }
     btn.disabled = true
 
@@ -162,24 +168,18 @@ function ligarCadastro(fCad) {
       senha: app.querySelector('#c-senha').value,
       nome: app.querySelector('#c-nome').value.trim(),
       telefone: app.querySelector('#c-tel').value.trim(),
-      tipo,
+      tipo: 'dono',
     })
-    if (error) return mostrarAcesso('cadastro', { erro: traduzErroAuth(error), tipo })
+    if (error) return mostrarAcesso('cadastro', { erro: traduzErroAuth(error) })
     if (!session) {
       return mostrarAcesso('entrar', {
         erro: 'Conta criada! Confirme pelo e-mail e entre. (Nos testes, desligue "Confirm email" no Supabase.)',
       })
     }
 
-    if (tipo === 'dono') {
-      const { error: errEst } = await criarMeuEstudio(nomeEstudio)
-      if (errEst) {
-        return mostrarAcesso('cadastro', {
-          erro: 'Conta criada, mas não deu pra criar o estúdio: ' + (errEst.message || ''),
-          tipo,
-        })
-      }
-    }
+    const { error: errNeg } = await criarMeuEstudio(nomeNegocio)
+    // se falhar aqui, a conta já existe: ao recarregar, o portão pede o nome de novo
+    if (errNeg) console.error('Não deu pra criar o negócio:', errNeg)
     location.reload()
   })
 }

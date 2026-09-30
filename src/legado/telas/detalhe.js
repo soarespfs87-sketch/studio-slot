@@ -1,9 +1,9 @@
 // Tela: Detalhe da sala — fotos, specs, equipamento, preço e o caminho para a agenda
 
-import { brl, dataCurta } from '../format.js'
+import { brl, dataCurta } from '../../format.js'
 import { precosDaSala } from '../agenda.js'
 import { bufferTexto } from './agenda.js'
-import { capaSala } from '../ui.js'
+import { capaSala } from '../../ui.js'
 
 export function telaDetalhe({ sala }) {
   const p = precosDaSala(sala)

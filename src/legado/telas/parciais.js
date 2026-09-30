@@ -1,6 +1,6 @@
 // Pedaços de tela usados em mais de um passo do fluxo de reserva
 
-import { brl, dataBR, mmss } from '../format.js'
+import { brl, dataBR, mmss } from '../../format.js'
 
 // Barra do contador de 10 minutos (aparece em extras, dados e pagamento).
 export function barraContador(restanteMs) {

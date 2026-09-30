@@ -7,7 +7,7 @@
 //  montagem e desmontagem — horários colados numa reserva viram "preparo".
 // ────────────────────────────────────────────────────────────────
 
-import { ehFimDeSemana, hhmmParaMin, minParaHHMM, hojeISO } from './format.js'
+import { ehFimDeSemana, hhmmParaMin, minParaHHMM, hojeISO } from '../format.js'
 import { reservaSeguraOHorario, getConfig } from './dados.js'
 
 export const NOME_FAIXA = {

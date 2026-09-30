@@ -1,6 +1,6 @@
 // Telas da Fase 3: Minha Reserva, detalhe da reserva, cancelar e remarcar.
 
-import { brl, dataBR, hojeISO } from '../format.js'
+import { brl, dataBR, hojeISO } from '../../format.js'
 import { valorDoSlot, faixaDoDia, NOME_FAIXA } from '../agenda.js'
 import { slotBotao, tagTemporada, painelForaTemporada } from './agenda.js'
 

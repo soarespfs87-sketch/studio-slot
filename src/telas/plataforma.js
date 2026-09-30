@@ -103,13 +103,9 @@ function linhaEstudio(e, hoje) {
     </form>`
 }
 
-export function telaPlataforma({ estudios, podeImportar, nomeDemo, hoje }) {
+export function telaPlataforma({ estudios, hoje, comSair = false }) {
   return `
-    <div class="topo-nav">
-      <button class="link-voltar" data-ir="inicio">&larr; Voltar</button>
-    </div>
-
-    <div class="reservar-corpo">
+    <section class="modulo">
       <h1 class="titulo-grande">Painel da Plataforma</h1>
       <p class="detalhe-desc">
         Libere o plano depois de confirmar o pagamento no LastLink. A faixa, o
@@ -120,19 +116,9 @@ export function telaPlataforma({ estudios, podeImportar, nomeDemo, hoje }) {
         ${
           estudios.length
             ? estudios.map((e) => linhaEstudio(e, hoje)).join('')
-            : '<p class="vazio">Nenhum estúdio cadastrado ainda.</p>'
+            : '<p class="vazio">Nenhum negócio cadastrado ainda.</p>'
         }
       </div>
-
-      ${
-        podeImportar
-          ? `<div class="info-faixa" style="margin-top: 24px">
-               <strong>Dados de teste no navegador.</strong>
-               <p>Você tem o "${nomeDemo}" salvo aqui do protótipo. Traz pro banco como um estúdio seu, já ativo?</p>
-               <button class="botao" data-acao="importar-lumen">Importar ${nomeDemo}</button>
-               <span class="foto-status" id="status-import"></span>
-             </div>`
-          : ''
-      }
-    </div>`
+      ${comSair ? '<div class="rodape-links" style="margin-top: 22px"><button class="link-dono" data-acao="sair">Sair</button></div>' : ''}
+    </section>`
 }
