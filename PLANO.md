@@ -79,3 +79,48 @@ Tudo pertence a um Negócio. Um lead fechado vira (ou se liga a) uma Cliente. Um
 - Plano "Completo" · mais de um usuário por conta · inglês/dólar
 - IA de atendimento (estilo Luma)
 - Da planilha: Clube de Memórias (assinatura), catálogo de fornecedores de álbum, cenários anuais (pessimista/provável/otimista)
+
+---
+
+# 🖼️ Módulo Galerias (entrega e seleção de fotos)
+> Inspirado no Pixieset (galeria de clientes) e no Exposure (galeria como "história"). O fotógrafo sobe as fotos, manda um link pela WhatsApp e a cliente escolhe as favoritas ou baixa as fotos prontas, sem criar conta.
+
+## G.1 Decisões
+| Tema | Decisão |
+|---|---|
+| Onde fica | Dentro do Studio Slot, item novo no menu: **Galerias**. A galeria se liga à cliente e à compra (lead fechado). |
+| Arquivos | **Supabase Storage agora** (bucket privado `galerias`), código isolado em `src/modulos/galerias/arquivos.js` pra trocar pro Cloudflare R2 quando crescer. Exige Supabase Pro (o gratuito tem 1 GB). |
+| Dois tipos | **Seleção**: fotos leves (até 2048 px) com marca d'água, sem original guardado; a cliente marca as favoritas. **Entrega**: original + versão leve; a cliente baixa. São galerias diferentes porque a entrega costuma ser de fotos já editadas. |
+| Processamento | Feito **no navegador do fotógrafo** durante o envio (redimensionar, miniatura, marca d'água). Sem servidor de imagem, sem custo extra. |
+| Acesso da cliente | Link `studioslot.app.br/g/<código>` com código aleatório; senha opcional; data de expiração. Tudo passa pela função `galeria` (Edge Function), que confere a senha e entrega links temporários (1 h) das fotos. A cliente nunca acessa o banco direto. |
+| Fotos extras | Galeria de seleção tem "fotos incluídas" e "preço da foto extra". Ao enviar a seleção com extras, cai um lançamento **previsto** no Financeiro ligado à compra. |
+| Limite | Teste: **20 GB por fotógrafo**, galeria dentro do Pro. O preço do plano "Completo" decide-se depois do teste. |
+| Vídeo | Fase G3 (precisa de envio retomável pra arquivos grandes). |
+
+## G.2 Telas
+| Tela | O que acontece |
+|---|---|
+| **Galerias** (lista) | Cards com capa, cliente, tipo, status (rascunho / publicada / seleção recebida / expirada), espaço usado |
+| **Nova galeria** | Nome, cliente e compra, tipo, senha, expira em; seleção: fotos incluídas + preço da extra; entrega: download liberado |
+| **Galeria (fotógrafo)** | Arrastar fotos, barra de progresso, escolher capa, apagar; publicar → link + WhatsApp pronto; seleção recebida: favoritas, comentários, "copiar lista pro Lightroom", reabrir seleção |
+| **Galeria (cliente)** | Capa com a marca do fotógrafo, grade, foto em tela cheia; seleção: ♥, comentário, contador "12 de 30 · 3 extras R$ 45", enviar seleção; entrega: baixar foto ou baixar tudo |
+
+## G.3 O que o app guarda
+```
+Galeria: negócio, cliente, compra (lead), nome, código do link, tipo (selecao/entrega), status,
+  senha (hash), expira em, fotos incluídas, preço da extra (centavos), download liberado,
+  marca d'água, capa, mensagem, seleção enviada em, lançamento de extras
+Item da galeria: galeria, tipo (foto/video), nome original do arquivo, caminhos (original / web / miniatura),
+  largura, altura, bytes, ordem
+Favorita: galeria, item, comentário, quando
+```
+
+## G.4 Fases
+| | Fase | O que entrega |
+|---|---|---|
+| ✅ | **G1. Entrega** | Tabelas, bucket, função `galeria`, criar galeria, enviar fotos (redimensiona no navegador), página da cliente com senha/expiração, download foto a foto e em lote |
+| ✅ | **G2. Seleção** | Marca d'água, ♥ + comentário, limite de incluídas, fotos extras → Financeiro, lista pro Lightroom, aviso no Início |
+| | G3. Vídeo | Vídeos na entrega (envio retomável, player na galeria), limite por plano |
+| ✅ | **G4. Design e história** | Tela Design com prévia ao vivo: 2 layouts (grade/história), 5 capas, 5 fontes, 7 paletas (inclui "minha marca"), 3 grades, espaço e tamanho, padrão do negócio; capítulos com texto e ritmo automático das fotos; vídeos por link (YouTube/Vimeo) tocando na galeria; música de fundo (MP3 ou link Spotify/YouTube) |
+| ✅ | **Portal da cliente** | Um link por cliente (`/c/<código>`) com uma pasta por ensaio; lista do fotógrafo agrupada por cliente e ensaio |
+| | Depois | Loja de impressões, app da galeria, R2 |

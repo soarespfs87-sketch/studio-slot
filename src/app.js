@@ -16,6 +16,7 @@ import { rodapeStudioSlot } from './ui.js'
 import * as inicio from './modulos/inicio/index.js'
 import * as leads from './modulos/leads/index.js'
 import * as clientes from './modulos/clientes/index.js'
+import * as galerias from './modulos/galerias/index.js'
 import * as precos from './modulos/precos/index.js'
 import * as financeiro from './modulos/financeiro/index.js'
 import * as ajustes from './modulos/ajustes/index.js'
@@ -26,6 +27,7 @@ const MENU = [
   { id: 'inicio', rotulo: 'Início', modulo: inicio },
   { id: 'leads', rotulo: 'Leads', modulo: leads },
   { id: 'clientes', rotulo: 'Clientes', modulo: clientes },
+  { id: 'galerias', rotulo: 'Galerias', modulo: galerias },
   { id: 'precos', rotulo: 'Preços', modulo: precos },
   { id: 'financeiro', rotulo: 'Financeiro', modulo: financeiro },
   { id: 'ajustes', rotulo: 'Ajustes', modulo: ajustes },

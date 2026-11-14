@@ -31,6 +31,27 @@ prompts de cada fase em `PROMPTS.md`.
       - [ ] Antes de liberar o teste: contratar Supabase Pro e ligar "Leaked password protection"
         (Supabase › Authentication › Providers › Email)
 
+## Galerias (entrega e seleção de fotos) — G1 + G2
+Plano: `PLANO.md` › "Módulo Galerias".
+- [x] Banco: `banco/galerias-g1g2.sql` (tabelas `galerias`, `galeria_itens`, `galeria_favoritas`, bucket privado `galerias`)
+- [x] Função do servidor: `supabase/functions/galeria/index.ts` (publicada no Supabase como `galeria`, sem login)
+- [x] App do fotógrafo: menu **Galerias**, também na ficha da cliente e no Início
+- [x] Página da cliente: `studioslot.app.br/g/<codigo>`
+- [ ] Testar no navegador: criar galeria, enviar fotos, abrir o link no celular, favoritar, enviar seleção, baixar
+- [ ] **Supabase Pro antes de usar de verdade**: o gratuito tem só 1 GB de armazenamento e pausa o banco
+
+Onde está cada coisa:
+- `src/modulos/galerias/index.js` — lista, galeria aberta, envio das fotos
+- `src/modulos/galerias/formulario.js` — nova/editar galeria
+- `src/modulos/galerias/arquivos.js` — redimensiona, marca d'água e guarda no armário (é o único arquivo que muda se trocar pro Cloudflare R2)
+- `src/modulos/galerias/publica.js` — página da cliente
+- `src/modulos/galerias/regras.js` — contas da seleção, Lightroom, expiração (com testes)
+- `src/modulos/galerias/design.js` — tela Design (Visual · Capítulos e vídeos · Música) com prévia ao vivo
+- Banco do G4: `banco/galerias-g4-design.sql` (colunas `design`, `secoes`, `videos`, `musica`; `galeria_itens.secao`)
+- Prévia: `/g/<codigo>?previa=1` com o fotógrafo logado abre até rascunho (só pra ver)
+- `src/modulos/galerias/portal.js` — portal da cliente `/c/<codigo>`: uma pasta por ensaio (galerias da mesma compra juntas). Código em `clientes.portal_codigo` (`banco/galerias-portal.sql`)
+- Espaço por fotógrafo: 20 GB (coluna `estudios.galeria_limite_gb`, só o admin muda)
+
 ## Como liberar um fotógrafo do teste
 1. A pessoa cria a conta em studioslot.app.br (vê "Falta só a assinatura").
 2. Você entra, vai em Ajustes › Painel da plataforma.

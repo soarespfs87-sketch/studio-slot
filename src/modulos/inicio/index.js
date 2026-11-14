@@ -27,6 +27,8 @@ import { calcularLembretes } from '../clientes/regras.js'
 import { itemLembrete } from '../clientes/ui.js'
 import { iconeWhats, dataCurtaBR } from '../leads/ui.js'
 import { metricasCRM, checklist, campanhasAtivas } from './regras.js'
+import { carregarGalerias } from '../galerias/dados.js'
+import { diasParaExpirar } from '../galerias/regras.js'
 
 const DIAS_SEMANA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
 
@@ -56,6 +58,30 @@ function blocoChecklist(c) {
     </div>`
 }
 
+// Galerias que pedem atenção: seleção recebida e link expirando em até 3 dias.
+function itensGaleria(galerias, hoje) {
+  const recebidas = galerias.filter((g) => g.status === 'selecao_enviada')
+  const expirando = galerias.filter((g) => {
+    const d = diasParaExpirar(g.expira_em, hoje)
+    return g.status === 'publicada' && d != null && d >= 0 && d <= 3
+  })
+  const item = (g, tag, cls) => `
+    <li class="lembrete ${cls}">
+      <div class="lb-texto">
+        <span class="lb-tag">${tag}</span>
+        <strong><a href="#/galerias/${g.id}">${esc(g.nome)}</a></strong>
+      </div>
+      <div class="lb-acoes"><a class="mini-btn" href="#/galerias/${g.id}">Abrir</a></div>
+    </li>`
+  return [
+    ...recebidas.map((g) => item(g, '🖼️ Seleção recebida', 'lembrete-venda')),
+    ...expirando.map((g) => {
+      const d = diasParaExpirar(g.expira_em, hoje)
+      return item(g, `⏳ Galeria expira ${d === 0 ? 'hoje' : `em ${d} ${d === 1 ? 'dia' : 'dias'}`}`, 'lembrete-hoje')
+    }),
+  ]
+}
+
 function itemFollowup(l, negocio, hoje) {
   const s = situacaoFollowup(l.proximo_followup, hoje)
   return `
@@ -77,11 +103,12 @@ export async function render(el, ctx) {
     el.innerHTML = `<section class="modulo"><h1 class="titulo-grande">${esc(ctx.negocio.nome)}</h1><p class="vazio">Carregando…</p></section>`
   }
   const id = ctx.negocio.id
-  const [rp, rl, rf, rc] = await Promise.all([
+  const [rp, rl, rf, rc, rg] = await Promise.all([
     carregarPrecos(id),
     carregarLeads(id, { recarregar: true }),
     carregarLancamentos(id),
     carregarClientes(id),
+    carregarGalerias(id),
   ])
   if (location.hash.replace(/^#\/?/, '').split('/')[0] !== 'inicio' && location.hash.replace(/^#\/?/, '') !== '') return
   const error = rp.error || rl.error || rf.error || rc.error
@@ -136,7 +163,8 @@ export async function render(el, ctx) {
   const ck = checklist({ config, custos, equipamentos, servicos, leads })
 
   const d = new Date()
-  const nadaPraHoje = !followups.length && !carinhoDaSemana.length
+  const galeriasPraFazer = rg.error ? [] : itensGaleria(rg.dados.galerias, hoje) // galerias não derrubam o painel
+  const nadaPraHoje = !followups.length && !carinhoDaSemana.length && !galeriasPraFazer.length
 
   el.innerHTML = `
     <section class="modulo modulo-largo">
@@ -154,6 +182,7 @@ export async function render(el, ctx) {
               nadaPraHoje
                 ? '<p class="vazio-mini">Nenhum follow-up ou lembrete pra esta semana. 🌿</p>'
                 : `<ul class="lembretes">
+                    ${galeriasPraFazer.join('')}
                     ${followups.map((l) => itemFollowup(l, negocio, hoje)).join('')}
                     ${carinhoDaSemana.map((l) => itemLembrete(l, whats[l.clienteId])).join('')}
                   </ul>`

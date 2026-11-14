@@ -10,8 +10,9 @@ import { formatarWhatsApp, linkWhatsApp } from '../leads/regras.js'
 import { iconeWhats } from '../leads/ui.js'
 import { salvarFamiliar, apagarFamiliar, apagarCliente, marcarLembreteFeito, mensagemDeErro } from './dados.js'
 import { PARENTESCOS, rotuloParentesco, idadeEm, textoIdade, formatarCpf, formatarCep } from './regras.js'
-import { itemLembrete, dataBR } from './ui.js'
+import { itemLembrete, dataBR, linkWhatsMsg } from './ui.js'
 import { pilulaStatus } from '../contratos/telas.js'
+import { STATUS as STATUS_GALERIA, mensagemPortal } from '../galerias/regras.js'
 
 export function enderecoTexto(c) {
   const linha1 = [c.rua, c.numero].filter(Boolean).join(', ')
@@ -84,7 +85,7 @@ function formFamiliar(f = null) {
     </li>`
 }
 
-export function renderFicha(el, { cliente, compras, lembretes, contratos = [], negocio, recarregar }) {
+export function renderFicha(el, { cliente, compras, lembretes, contratos = [], galerias = [], negocio, recarregar }) {
   const c = cliente
   const hoje = hojeISO()
   const estado = { editandoFam: null, nascendo: null, novoFam: false }
@@ -179,6 +180,29 @@ export function renderFicha(el, { cliente, compras, lembretes, contratos = [], n
                       )
                       .join('')}</ul>`
                   : '<p class="vazio-mini">Nenhum contrato ainda.</p>'
+              }
+            </div>
+            <div class="cartao-bloco">
+              <div class="bloco-cabeca"><h2 class="bloco-titulo">Galerias</h2><a class="mini-btn mini-btn-primario" href="#/galerias/nova/${c.id}">+ Nova galeria</a></div>
+              ${
+                galerias.length
+                  ? `<div class="gal-acoes" style="margin:0 0 10px">
+                      <a class="mini-btn" href="/c/${esc(c.portal_codigo)}" target="_blank" rel="noopener">Ver portal dela</a>
+                      ${c.whatsapp ? `<a class="mini-btn" target="_blank" rel="noopener" href="${linkWhatsMsg(c.whatsapp, mensagemPortal(c, negocio))}">Mandar portal no WhatsApp</a>` : ''}
+                    </div>`
+                  : ''
+              }
+              ${
+                galerias.length
+                  ? `<ul class="lanc-lista">${galerias
+                      .map(
+                        (g) => `<li class="lanc"><a class="lanc-link" href="#/galerias/${g.id}">
+                          <span class="lanc-data">${dataBR(g.created_at.slice(0, 10)).slice(0, 5)}</span>
+                          <span class="lanc-desc"><strong>${esc(g.nome)}</strong><small>${g.tipo === 'selecao' ? 'Seleção' : 'Entrega'} · ${g.n_itens} fotos</small></span>
+                          <span class="gal-st ${STATUS_GALERIA[g.status].classe}">${STATUS_GALERIA[g.status].rotulo}</span></a></li>`,
+                      )
+                      .join('')}</ul>`
+                  : '<p class="vazio-mini">Nenhuma galeria ainda.</p>'
               }
             </div>
             <button type="button" class="link-arquivar" data-acao="apagar">Apagar cliente</button>

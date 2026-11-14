@@ -18,6 +18,7 @@ import { carregarContratos } from '../contratos/dados.js'
 import { renderModelos, renderEditorModelo, renderGerar, renderContrato } from '../contratos/telas.js'
 import { montarValores } from '../contratos/regras.js'
 import { carregarLancamentos } from '../financeiro/dados.js'
+import { carregarGalerias } from '../galerias/dados.js'
 import { renderFormulario } from './formulario.js'
 import { formatarWhatsApp } from '../leads/regras.js'
 
@@ -215,11 +216,12 @@ export async function render(el, ctx, aviso) {
   if (!el.querySelector('.modulo')) {
     el.innerHTML = '<section class="modulo"><h1 class="titulo-grande">Clientes</h1><p class="vazio">Carregando…</p></section>'
   }
-  const [rc, rl, rp, rk] = await Promise.all([
+  const [rc, rl, rp, rk, rg] = await Promise.all([
     carregarClientes(ctx.negocio.id),
     carregarLeads(ctx.negocio.id, { recarregar: true }),
     carregarPrecos(ctx.negocio.id),
     carregarContratos(ctx.negocio.id),
+    carregarGalerias(ctx.negocio.id),
   ])
   if (location.hash.replace(/^#\/?/, '').split('/')[0] !== 'clientes') return
   const error = rc.error || rl.error || rp.error || rk.error
@@ -292,6 +294,7 @@ export async function render(el, ctx, aviso) {
     compras: cliente.compras || [],
     lembretes: lembretes.filter((l) => l.clienteId === cliente.id),
     contratos: contratosDela,
+    galerias: rg.error ? [] : rg.dados.galerias.filter((g) => g.cliente_id === cliente.id),
     negocio: ctx.negocio,
     recarregar,
   })
